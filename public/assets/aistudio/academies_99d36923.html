@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rabona | الأكاديميات</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rabona.css">
+<style>
+.wrap{max-width:1100px;margin:auto;padding:18px 16px calc(var(--bar) + 28px + env(safe-area-inset-bottom))}
+.hero{position:relative;border-radius:20px;padding:20px 18px;background:linear-gradient(150deg,#0f5a2f,#06150d 80%);overflow:hidden;border:1px solid var(--line)}
+.hero h1{font-size:28px;font-weight:800;line-height:1.2;position:relative;z-index:1}
+.hero h1 em{font-style:normal;color:var(--green)}
+.hero p{color:#b9c9bf;font-size:14px;margin-top:6px;position:relative;z-index:1}
+.hero .big{position:absolute;left:14px;top:4px;font:800 92px/1 'Montserrat',sans-serif;color:rgba(0,200,83,.12);direction:ltr;pointer-events:none}
+.search{margin-top:14px;display:flex;align-items:center;gap:10px;background:rgba(11,11,11,.7);border:1.5px solid var(--line);border-radius:14px;height:52px;padding:0 14px;max-width:560px;position:relative;z-index:1}
+.search:focus-within{border-color:var(--green)}
+.search svg{stroke:var(--grey)}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:16px}
+.search input::placeholder{color:#8A8A8A}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:14px -16px 0;padding:0 16px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:38px;padding:0 16px;border-radius:19px;background:var(--surface);border:1px solid var(--line);color:var(--muted);font-weight:500;font-size:14px}
+.chip.on{background:var(--green);border-color:var(--green);color:#04170B;font-weight:700}
+.count{color:var(--muted);font-size:13px;margin:16px 0 10px}
+.count b{font:800 15px 'Montserrat',sans-serif;color:var(--white)}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
+.cover{height:150px}
+.cover .over.tl{top:12px;inset-inline-start:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.cover .rate{position:absolute;z-index:3;top:12px;left:12px;background:rgba(11,11,11,.78);border-radius:10px;padding:4px 10px;font:800 14px 'Montserrat',sans-serif;display:flex;gap:5px;align-items:center;direction:ltr}
+.cover .rate svg{width:14px;height:14px;fill:var(--green);stroke:none}
+.logo{position:relative;z-index:5;width:64px;height:64px;margin:-34px 14px 0;border:4px solid var(--surface);border-radius:20px;font-size:26px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.body{padding:8px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.name{font-size:18px;font-weight:800}
+.row{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13.5px}
+.row svg{width:16px;height:16px}
+.rv{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.spots{margin-top:2px}
+.spots .t{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.spots .t b{color:var(--white)}
+.spots .t.low b{color:var(--amber)}
+.spots .bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;transform:skewX(var(--skew))}
+.spots .bar i{display:block;height:100%;background:var(--green);border-radius:3px}
+.spots .low~.bar i,.spots.low .bar i{background:var(--amber)}
+.foot{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.price{flex:1;font-size:12.5px;color:var(--muted)}
+.price .num{display:block;font-size:26px;line-height:1.1;color:var(--white)}
+.price .num i{font:500 12px 'Tajawal',sans-serif;color:var(--muted);font-style:normal;letter-spacing:0;margin-inline-start:3px}
+.empty{display:none;text-align:center;color:var(--muted);padding:48px 16px;line-height:1.8}
+.empty b{display:block;color:var(--white);font-size:17px}
+.sk-c{height:330px;border-radius:16px}
+@media (hover:hover){.card:hover{border-color:#3a3a3a;transform:translateY(-2px)}}
+@media (min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:768px){.wrap{padding-bottom:40px}.hero h1{font-size:34px}.hero{padding:28px 26px}.chips{margin-inline:0;padding-inline:0;flex-wrap:wrap;overflow:visible}}
+@media (min-width:1024px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+@media (min-width:1024px){
+.wrap{max-width:1440px;padding-top:28px}
+.hero{display:grid;grid-template-columns:1fr minmax(0,460px);column-gap:32px;align-items:center;padding:40px}
+.hero h1{grid-column:1;font-size:42px}.hero p{grid-column:1;font-size:16px}
+.hero .search{grid-column:2;grid-row:1/span 2;max-width:none;height:58px;margin-top:0}
+.hero .big{font-size:160px}
+.cover{height:170px}
+.grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (min-width:1280px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:1680px){.grid{grid-template-columns:repeat(4,1fr)}}
+
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero diag">
+    <h1>اختار أكاديميتك<br><em>وابدأ رحلتك</em></h1>
+    <p>أكاديميات معتمدة، مدربين محترفين، واشتراك من التطبيق.</p>
+    <span class="big" aria-hidden="true">06</span>
+    <label class="search"><svg class="i"><use href="#search"/></svg>
+      <input id="q" type="search" placeholder="ابحث باسم الأكاديمية أو المنطقة" autocomplete="off"></label>
+  </section>
+  <div class="chips" id="chips"></div>
+  <p class="count" id="count"></p>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty"><b>مفيش أكاديميات مطابقة</b>جرّب تغيّر كلمة البحث أو تشيل الفلتر.</div>
+</main>
+
+<script src="rabona.js"></script>
+<script>
+const {ic,art,av,stars,load}=Rabona;
+Rabona.chrome('academies');
+
+// TODO: load from Firestore (academies collection). cover = image URL, logo = image URL (optional).
+const academies=[
+ {n:'أكاديمية النجوم',area:'مدينة نصر، القاهرة',rate:4.8,reviews:126,min:6,max:14,players:240,price:800,spots:6,cap:40,trial:1,top:1},
+ {n:'أكاديمية الأهرام',area:'الجيزة',rate:4.6,reviews:84,min:8,max:16,players:180,price:650,spots:22,cap:60,trial:1},
+ {n:'أكاديمية النصر',area:'التجمع الخامس',rate:4.9,reviews:211,min:5,max:12,players:310,price:1200,spots:3,cap:30,top:1},
+ {n:'أكاديمية الصقور',area:'الشيخ زايد',rate:4.4,reviews:47,min:10,max:18,players:95,price:900,spots:18,cap:40},
+ {n:'أكاديمية الشروق',area:'الشروق',rate:4.5,reviews:63,min:6,max:15,players:120,price:550,spots:15,cap:50,trial:1},
+ {n:'أكاديمية الفراعنة',area:'المعادي، القاهرة',rate:4.7,reviews:92,min:12,max:19,players:150,price:1000,spots:9,cap:45}];
+const filters=[['all','الكل'],['u10','تحت 10 سنين'],['m','من 10 لـ 14'],['o','15 فما فوق'],['p','الأقل سعراً']];
+let cur='all';
+const ages={all:()=>1,p:()=>1,u10:a=>a.min<10,m:a=>a.min<=14&&a.max>=10,o:a=>a.max>=15};
+const g=document.getElementById('grid');
+
+function card(a){
+  const i=academies.indexOf(a),low=a.spots<=8,pct=Math.round((1-a.spots/a.cap)*100);
+  return `
+  <article class="card">
+    <div class="cover pic">${a.cover?`<img src="${a.cover}" alt="">`:art(i*5+2)}
+      <div class="over tl">
+        ${a.top?`<span class="badge">${ic('trophy')}الأعلى تقييماً</span>`:''}
+        ${a.trial?`<span class="badge dark">${ic('gift')}حصة تجريبية مجاناً</span>`:''}
+      </div>
+      <span class="rate"><svg><use href="#star"/></svg>${a.rate}</span>
+    </div>
+    ${av(a.n,i*5+2,64,a.logo).replace('class="av"','class="av logo sq"')}
+    <div class="body">
+      <h2 class="name">${a.n}</h2>
+      <div class="rv">${stars(a.rate)}<span>(${a.reviews} تقييم)</span></div>
+      <div class="row">${ic('pin')}${a.area}</div>
+      <div class="row">${ic('users')}من ${a.min} لـ ${a.max} سنة · ${a.players} لاعب</div>
+      <div class="spots ${low?'low':''}">
+        <div class="t ${low?'low':''}"><span>${low?'🔥 الأماكن بتخلص':'أماكن متاحة'}</span><span>باقي <b>${a.spots}</b> من ${a.cap}</span></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="foot">
+        <div class="price">الاشتراك الشهري<span class="num">${a.price}<i>ج</i></span></div>
+        <button class="btn ghost" onclick="location.href='academy.html?id=${i}'">التفاصيل</button>
+        <button class="btn" onclick="location.href='academy.html?id=${i}&subscribe=1'">اشترك</button>
+      </div>
+    </div>
+  </article>`;
+}
+function render(){
+  const q=document.getElementById('q').value.trim();
+  let hide=false;try{hide=JSON.parse(localStorage.getItem('rabona-settings')||'{}').hideFull}catch(e){}
+  let l=academies.filter(a=>ages[cur](a)&&(a.n+a.area).includes(q)&&!(hide&&a.spots<=0));
+  if(cur==='p')l=[...l].sort((a,b)=>a.price-b.price);
+  document.getElementById('count').innerHTML=`<b>${l.length}</b> أكاديمية`;
+  document.getElementById('empty').style.display=l.length?'none':'block';
+  g.innerHTML=l.map(card).join('');
+}
+document.getElementById('chips').innerHTML=filters.map(f=>`<button class="chip ${f[0]==='all'?'on':''}" data-k="${f[0]}">${f[1]}</button>`).join('');
+document.getElementById('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;cur=b.dataset.k;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));render()};
+document.getElementById('q').oninput=render;
+load('<div class="sk-c sk"></div>'.repeat(3),g,render,450);
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rabona | المواعيد</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rabona.css">
+<style>
+.wrap{max-width:800px;margin:auto;padding:22px 16px calc(var(--bar) + 28px + env(safe-area-inset-bottom))}
+h1{font-size:28px;font-weight:800}
+.sub{color:var(--muted);font-size:15px;margin-top:6px}
+.empty{margin-top:20px;border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line);text-align:center}
+.empty .scene{height:190px;position:relative}
+.empty .scene .ghost{position:absolute;z-index:3;inset:0;display:grid;place-items:center}
+.empty .scene .ghost b{font:800 76px/1 'Montserrat',sans-serif;color:rgba(245,245,245,.14);letter-spacing:-.04em;direction:ltr}
+.empty .tx{padding:20px 20px 24px}
+.empty h2{font-size:21px}
+.empty p{color:var(--muted);line-height:1.8;margin-top:8px;font-size:15px}
+.actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:20px}
+.actions .btn{height:46px}
+.hl{display:flex;align-items:center;justify-content:space-between;margin:28px 0 12px}
+.hl h2{font-size:18px}
+.hl a{color:var(--green);font-size:14px;font-weight:700}
+.sg{display:grid;gap:10px}
+.s{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;transition:border-color .15s}
+.s .av{width:56px;height:56px;border-radius:16px;font-size:22px}
+.s .t{flex:1;min-width:0}.s .t b{display:block;font-size:15.5px}
+.s .t small{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12.5px;margin-top:3px;flex-wrap:wrap}
+.s .t small svg.i{width:14px;height:14px}
+.s .pr .num{font-size:20px;display:block;text-align:end}.s .pr small{font-size:11.5px;color:var(--muted)}
+@media (hover:hover){.s:hover{border-color:#3a3a3a}}
+@media (min-width:768px){.wrap{padding-bottom:40px}.sg{grid-template-columns:repeat(3,1fr)}.s{flex-direction:column;text-align:center;padding:16px}.s .pr .num{text-align:center}}
+
+@media (min-width:1024px){
+.wrap{max-width:1100px;padding-top:32px}h1{font-size:34px}
+.empty{display:grid;grid-template-columns:1fr 1fr;text-align:start}
+.empty .scene{height:auto;min-height:300px}
+.empty .tx{padding:36px;display:flex;flex-direction:column;justify-content:center}
+.actions{justify-content:flex-start}
+}
+
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1 class="h">مواعيدي</h1>
+  <p class="sub">تابع مواعيدك وحجوزاتك من مكان واحد.</p>
+
+  <section class="empty">
+    <div class="scene pic diag" id="scene"><div class="ghost"><b>00:00</b></div></div>
+    <div class="tx">
+      <h2>لسه مفيش مواعيد</h2>
+      <p>أول تمرين ليك على بعد اشتراك واحد. اختار أكاديميتك وهتلاقي جدولك هنا.</p>
+      <div class="actions">
+        <a class="btn" href="academies.html">اكتشف الأكاديميات</a>
+        <a class="btn ghost" href="login.html">تسجيل الدخول</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="hl"><h2 class="h">أكاديميات قريبة منك</h2><a href="academies.html">عرض الكل</a></div>
+  <div class="sg" id="sg"></div>
+</main>
+
+<script src="rabona.js"></script>
+<script>
+const {ic,art,av,stars}=Rabona;
+Rabona.chrome('bookings');
+document.getElementById('scene').insertAdjacentHTML('afterbegin',art(77));
+// TODO: replace with nearest academies from Firestore (by the player's governorate).
+const near=[['أكاديمية النجوم','مدينة نصر',4.8,800,0],['أكاديمية الأهرام','الجيزة',4.6,650,1],['أكاديمية الفراعنة','المعادي',4.7,1000,5]];
+document.getElementById('sg').innerHTML=near.map(a=>`
+ <a class="s" href="academy.html?id=${a[4]}">${av(a[0],a[4]*5+2,56)}
+  <div class="t"><b>${a[0]}</b><small><span>${ic('pin')}${a[1]}</span><span>${stars(a[2])}</span></small></div>
+  <div class="pr"><span class="num">${a[3]}</span><small>ج / شهر</small></div></a>`).join('');
+</script>
+</body>
+</html>

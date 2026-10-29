@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rabona | تفاصيل الأكاديمية</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rabona.css">
+<style>
+.wrap{max-width:760px;margin:auto;padding:0 0 calc(var(--bar) + 110px + env(safe-area-inset-bottom))}
+.gal{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px;scrollbar-width:none;margin-top:14px}
+.gal::-webkit-scrollbar{display:none}
+.gal .pic{flex:none;width:86%;max-width:520px;height:220px;border-radius:18px;scroll-snap-align:center}
+.gal .pic:first-child .over{top:12px;inset-inline-start:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.dots{display:flex;gap:5px;justify-content:center;margin-top:10px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .2s}
+.dots i.on{background:var(--green);width:18px;border-radius:3px}
+.head{padding:0 16px;display:flex;gap:14px;align-items:center;margin-top:14px}
+.head #logo .av{border-radius:20px;border:3px solid var(--green);font-size:28px}
+.head h1{font-size:24px;font-weight:800;line-height:1.25}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;color:var(--muted);font-size:13.5px}
+.meta span{display:flex;align-items:center;gap:5px}.meta svg{width:16px;height:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);margin:16px 16px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.kpis div{padding:12px 4px;text-align:center}
+.kpis div+div{border-inline-start:1px solid var(--line)}
+.kpis .num{font-size:21px;display:block;line-height:1.2}
+.kpis span.l{font-size:11.5px;color:var(--muted)}
+section.s{padding:0 16px;margin-top:26px}
+section.s>.h{font-size:18px;margin-bottom:12px}
+.desc{color:#c4c4c4;line-height:1.85;font-size:15px}
+.feat{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.feat span{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.feat svg{width:16px;height:16px;color:var(--green)}
+/* plans */
+.plans{display:grid;gap:10px}
+.plan{display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;text-align:start;width:100%;position:relative;transition:border-color .15s,background .15s}
+.plan .rd{width:22px;height:22px;border-radius:50%;border:2px solid var(--grey);flex:none;display:grid;place-items:center}
+.plan .rd i{width:10px;height:10px;border-radius:50%;background:var(--green);transform:scale(0);transition:transform .15s}
+.plan.on{border-color:var(--green);background:rgba(0,200,83,.07)}
+.plan.on .rd{border-color:var(--green)}.plan.on .rd i{transform:scale(1)}
+.plan .t{flex:1}.plan .t b{display:block;font-size:16px}.plan .t small{color:var(--muted);font-size:12.5px}
+.plan .p{text-align:end}.plan .p .num{font-size:24px;line-height:1.1}
+.plan .p small{display:block;font-size:12px;color:var(--muted)}
+.plan .badge{position:absolute;top:-11px;inset-inline-end:14px;height:22px;font-size:11px}
+.plans.flash .plan{animation:fl 1s ease-out}
+@keyframes fl{0%{box-shadow:0 0 0 0 rgba(0,200,83,.6)}100%{box-shadow:0 0 0 14px rgba(0,200,83,0)}}
+/* schedule */
+.sched{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.sched .r{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:12px 14px}
+.sched .r+.r{border-top:1px solid var(--line)}
+.sched .d{font-weight:800}
+.sched .tm{color:var(--muted);font-size:14px;display:flex;align-items:center;gap:6px}.sched .tm svg{width:16px;height:16px}
+.sched .tm .num{font-size:14px;color:var(--white)}
+.sched .g{font-size:12px;color:var(--green);background:rgba(0,200,83,.12);border-radius:6px;padding:2px 8px}
+/* coaches */
+.coaches{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding:0 16px 4px}
+.coaches::-webkit-scrollbar{display:none}
+.coach{flex:none;width:138px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 10px;text-align:center}
+.coach .av{width:64px;height:64px;font-size:26px;margin:auto}
+.coach b{display:block;margin-top:10px;font-size:14.5px}
+.coach small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+/* reviews */
+.sum{display:flex;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.sum .big{font:800 48px/1 'Montserrat',sans-serif;direction:ltr}
+.sum .bars{flex:1;display:grid;gap:5px}
+.sum .bars div{display:flex;align-items:center;gap:8px;font:600 11px 'Montserrat',sans-serif;color:var(--muted);direction:ltr}
+.sum .bars i{flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden;display:block}
+.sum .bars i b{display:block;height:100%;background:var(--green)}
+.rv{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.rv .t{display:flex;align-items:center;gap:10px}.rv .t b{display:block;font-size:14.5px}.rv .t small{color:var(--muted);font-size:12px}
+.rv .t .stars{margin-inline-start:auto}
+.rv p{margin-top:10px;line-height:1.75;font-size:14.5px;color:#cfcfcf}
+/* map */
+.map{display:block;position:relative;height:170px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#101510}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map .lab{position:absolute;inset-inline:12px;bottom:12px;z-index:2;background:rgba(11,11,11,.86);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:13.5px}
+.map .lab b{display:block}.map .lab small{color:var(--muted)}
+.map .lab .btn{height:34px;padding:0 14px;font-size:13px;margin-inline-start:auto}
+/* sticky subscribe */
+.buy{position:fixed;inset-inline:0;bottom:calc(var(--bar) + env(safe-area-inset-bottom));z-index:19;background:rgba(15,15,15,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.buy>div{max-width:760px;margin:auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
+.buy .pr{flex:1}.buy .pr small{display:block;font-size:12px;color:var(--muted)}
+.buy .pr .num{font-size:26px;line-height:1.1}.buy .pr .num i{font:500 12.5px 'Tajawal',sans-serif;color:var(--muted);font-style:normal;letter-spacing:0;margin-inline-start:4px}
+.buy .btn{height:50px;padding:0 28px;font-size:16px}
+.login{text-align:center;color:var(--muted);font-size:13.5px;margin-top:22px}.login a{color:var(--green);font-weight:700}
+.missing{display:none;text-align:center;padding:60px 16px;color:var(--muted);line-height:1.8}
+.missing h1{color:var(--white);margin-bottom:8px;font-size:24px}
+.missing .btn{margin-top:18px}
+@media (min-width:768px){.wrap{padding-bottom:110px}.buy{bottom:0}.gal .pic{height:280px}.kpis .num{font-size:24px}}
+
+@media (min-width:1024px){.buy{inset-inline-start:var(--rail)}}
+@media (min-width:1280px){
+.wrap{max-width:1180px;padding:24px 28px 48px}
+#details{display:grid;grid-template-columns:minmax(0,1fr) 360px;column-gap:28px;align-items:start}
+#details>*{grid-column:1}
+#details>.buy{grid-column:2;grid-row:1/span 12;position:sticky;top:calc(var(--top) + 16px);inset-inline:auto;bottom:auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;backdrop-filter:none}
+.buy>div{flex-direction:column;align-items:stretch;padding:22px;gap:14px;max-width:none}
+.buy .pr .num{font-size:38px}.buy .btn{width:100%}
+.gal{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:170px 170px;gap:10px;overflow:visible;padding:0;margin-top:0}
+.gal .pic{width:auto;max-width:none;height:auto}.gal .pic:first-child{grid-row:span 2}.gal .pic:nth-child(n+4){display:none}
+.dots{display:none}
+.head,section.s{padding-inline:0}.kpis{margin-inline:0}
+.coaches{flex-wrap:wrap;overflow:visible;margin-inline:0;padding:0}
+}
+
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div id="details">
+    <div class="gal" id="gal"></div>
+    <div class="dots" id="dots"></div>
+    <div class="head"><div id="logo"></div>
+      <div><h1 id="name"></h1>
+        <div class="meta"><span>
+          <svg class="i"><use href="#pin"/></svg><span id="area"></span></span><span id="rv"></span></div></div></div>
+
+    <div class="kpis">
+      <div><span class="num" id="k-rate"></span><span class="l">التقييم</span></div>
+      <div><span class="num" id="k-pl"></span><span class="l">لاعب</span></div>
+      <div><span class="num" id="k-age"></span><span class="l">السن</span></div>
+      <div><span class="num" id="k-sp"></span><span class="l">مكان متاح</span></div>
+    </div>
+
+    <section class="s"><h2 class="h">عن الأكاديمية</h2>
+      <p class="desc" id="desc"></p><div class="feat" id="feat"></div></section>
+
+    <section class="s" id="plansSec"><h2 class="h">الباقات</h2><div class="plans" id="plans"></div></section>
+    <section class="s"><h2 class="h">مواعيد التدريب</h2><div class="sched" id="sched"></div></section>
+    <section class="s"><h2 class="h">المدربين</h2><div class="coaches" id="coaches"></div></section>
+    <section class="s"><h2 class="h">آراء أولياء الأمور واللاعبين</h2><div class="sum" id="sum"></div><div id="rvs"></div></section>
+    <section class="s"><h2 class="h">الموقع</h2><a class="map" id="map" target="_blank" rel="noopener"></a></section>
+    <p class="login">عندك حساب بالفعل؟ <a href="login.html">سجّل دخولك</a></p>
+
+    <div class="buy"><div>
+      <div class="pr"><small id="buyLbl">الاشتراك الشهري</small><span class="num" id="buyP"></span></div>
+      <a class="btn lg" id="buyBtn" href="signup.html">اشترك الآن</a></div></div>
+  </div>
+  <section class="missing" id="missing">
+    <h1>الأكاديمية غير موجودة</h1>
+    <p>اختار أكاديمية من القائمة لعرض تفاصيلها.</p>
+    <a class="btn" href="academies.html">عرض الأكاديميات</a>
+  </section>
+</main>
+
+<script src="rabona.js"></script>
+<script>
+const {ic,art,av,stars,rnd}=Rabona;
+Rabona.chrome('academies');
+
+const academies=[
+  {n:'أكاديمية النجوم',area:'مدينة نصر، القاهرة',rate:4.8,reviews:126,min:6,max:14,players:240,price:800,spots:6,cap:40,trial:1,top:1},
+  {n:'أكاديمية الأهرام',area:'الجيزة',rate:4.6,reviews:84,min:8,max:16,players:180,price:650,spots:22,cap:60,trial:1},
+  {n:'أكاديمية النصر',area:'التجمع الخامس',rate:4.9,reviews:211,min:5,max:12,players:310,price:1200,spots:3,cap:30,top:1},
+  {n:'أكاديمية الصقور',area:'الشيخ زايد',rate:4.4,reviews:47,min:10,max:18,players:95,price:900,spots:18,cap:40},
+  {n:'أكاديمية الشروق',area:'الشروق',rate:4.5,reviews:63,min:6,max:15,players:120,price:550,spots:15,cap:50,trial:1},
+  {n:'أكاديمية الفراعنة',area:'المعادي، القاهرة',rate:4.7,reviews:92,min:12,max:19,players:150,price:1000,spots:9,cap:45}];
+// TODO: schedule / coaches / reviews / plans come from Firestore. Demo data generated below.
+const dayPool=[['السبت','الإثنين','الأربعاء'],['الأحد','الثلاثاء','الخميس'],['السبت','الثلاثاء','الخميس']];
+const coachNames=[['كابتن محمود سالم','مدرب رئيسي'],['كابتن أحمد فؤاد','مدرب حراس'],['كابتن ياسر منصور','لياقة بدنية'],['كابتن هشام عادل','مدرب ناشئين']];
+const revs=[['أم عمر','ولي أمر',5,'ابني بقاله 4 شهور هنا وتطوره واضح جداً. المدربين بيهتموا بكل لاعب، والتواصل ممتاز مع أولياء الأمور.'],
+ ['حسام طارق','لاعب',5,'الملعب نضيف والتدريبات منظمة. أحسن حاجة إن الحصص مقسمة حسب السن والمستوى.'],
+ ['أبو يوسف','ولي أمر',4,'مستوى كويس والأسعار معقولة. نفسي بس يزودوا مواعيد الويك إند.']];
+const id=new URLSearchParams(location.search).get('id');
+const sub=new URLSearchParams(location.search).get('subscribe');
+const i=id!==null&&/^(0|[1-9]\d*)$/.test(id)?Number(id):-1;
+const a=academies[i];
+
+if(a){
+  document.title=`Rabona | ${a.n}`;
+  const low=a.spots<=8,days=dayPool[i%3];
+  // gallery
+  const badges=`${a.top?`<span class="badge">${ic('trophy')}الأعلى تقييماً</span>`:''}${a.trial?`<span class="badge dark">${ic('gift')}حصة تجريبية مجاناً</span>`:''}${low?`<span class="badge amber">${ic('flame')}باقي ${a.spots} أماكن</span>`:''}`;
+  document.getElementById('gal').innerHTML=[0,1,2,3].map(k=>`<div class="pic">${art(i*5+2+k*11)}${k===0?`<div class="over">${badges}</div>`:''}</div>`).join('');
+  document.getElementById('dots').innerHTML='<i class="on"></i><i></i><i></i><i></i>';
+  const gal=document.getElementById('gal');
+  gal.addEventListener('scroll',()=>{const k=Math.round(Math.abs(gal.scrollLeft)/(gal.firstElementChild.offsetWidth+8));document.querySelectorAll('#dots i').forEach((d,x)=>d.classList.toggle('on',x===Math.min(k,3)))},{passive:true});
+  // header
+  document.getElementById('logo').innerHTML=av(a.n,i*5+2,68);
+  document.getElementById('name').textContent=a.n;
+  document.getElementById('area').textContent=a.area;
+  document.getElementById('rv').innerHTML=`<span style="display:flex;align-items:center;gap:6px">${stars(a.rate)}(${a.reviews})</span>`;
+  document.getElementById('k-rate').textContent=a.rate;
+  document.getElementById('k-pl').textContent=a.players;
+  document.getElementById('k-age').textContent=`${a.min}–${a.max}`;
+  document.getElementById('k-sp').textContent=a.spots;
+  document.getElementById('desc').textContent=`${a.n} بتدرّب لاعبين من ${a.min} لحد ${a.max} سنة على أيدي مدربين معتمدين، بخطة تطوير فردية لكل لاعب وماتشات ودية شهرية. الهدف إن اللاعب يتعلم الأساسيات صح ويستمتع بالكورة.`;
+  document.getElementById('feat').innerHTML=[['shield','مدربين معتمدين'],['trophy','ماتشات شهرية'],['users','مجموعات حسب السن'],['whistle','متابعة فردية']].map(f=>`<span>${ic(f[0])}${f[1]}</span>`).join('');
+
+  // plans
+  const q=Math.round(a.price*3*.9/10)*10,y=Math.round(a.price*12*.75/10)*10;
+  const plans=[{k:'m',t:'اشتراك شهري',s:'بدون التزام',p:a.price,u:'ج / شهر'},
+    {k:'q',t:'3 شهور',s:`توفير ${a.price*3-q} ج`,p:q,u:'ج / 3 شهور',b:'الأوفر'},
+    {k:'y',t:'سنوي',s:`توفير ${a.price*12-y} ج`,p:y,u:'ج / السنة'}];
+  let sel=0;
+  const pl=document.getElementById('plans');
+  const drawPlans=()=>{pl.innerHTML=plans.map((p,x)=>`<button class="plan ${x===sel?'on':''}" data-x="${x}">
+    ${p.b?`<span class="badge">${p.b}</span>`:''}<span class="rd"><i></i></span>
+    <span class="t"><b>${p.t}</b><small>${p.s}</small></span>
+    <span class="p"><span class="num">${p.p}</span><small>${p.u}</small></span></button>`).join('');
+    const p=plans[sel];
+    document.getElementById('buyLbl').textContent=p.t;
+    document.getElementById('buyP').innerHTML=`${p.p}<i>ج</i>`;
+    document.getElementById('buyBtn').href=`signup.html?academy=${i}&plan=${p.k}`;};
+  pl.onclick=e=>{const b=e.target.closest('.plan');if(!b)return;sel=+b.dataset.x;drawPlans()};
+  drawPlans();
+  if(sub){setTimeout(()=>{document.getElementById('plansSec').scrollIntoView({behavior:'smooth',block:'center'});pl.classList.add('flash')},300)}
+
+  // schedule
+  document.getElementById('sched').innerHTML=days.map((d,x)=>`<div class="r"><span class="d">${d}</span><span class="tm">${ic('clock')}<span class="num">${x===1?'6:30':'5:00'}</span> – <span class="num">${x===1?'8:00':'6:30'}</span> م</span><span class="g">${x===1?'تحت 10':'من 10 فما فوق'}</span></div>`).join('');
+  // coaches
+  document.getElementById('coaches').innerHTML=coachNames.map((c,x)=>`<div class="coach">${av(c[0].replace('كابتن ',''),i*7+x+30,64)}<b>${c[0]}</b><small>${c[1]}</small></div>`).join('');
+  // reviews
+  const dist=[62,24,9,3,2];
+  document.getElementById('sum').innerHTML=`<div style="text-align:center"><div class="big">${a.rate}</div>${stars(a.rate)}<div style="font-size:12px;color:var(--muted);margin-top:6px">${a.reviews} تقييم</div></div>
+    <div class="bars">${dist.map((v,x)=>`<div>${5-x}<i><b style="width:${v}%"></b></i></div>`).join('')}</div>`;
+  document.getElementById('rvs').innerHTML=revs.map((r,x)=>`<div class="rv"><div class="t">${av(r[0],x+60,40)}<div><b>${r[0]}</b><small>${r[1]}</small></div>${stars(r[2])}</div><p>${r[3]}</p></div>`).join('');
+  // map
+  const q2=encodeURIComponent(a.n+' '+a.area);
+  const m=document.getElementById('map');m.href=`https://www.google.com/maps/search/?api=1&query=${q2}`;
+  const px=120+rnd(i,1)*160;
+  m.innerHTML=`<svg viewBox="0 0 400 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="400" height="170" fill="#101510"/>
+    <g stroke="#1d261d" stroke-width="10" fill="none"><path d="M-10 60 L410 90"/><path d="M-10 130 L410 110"/><path d="M90 -10 L120 180"/><path d="M250 -10 L230 180"/></g>
+    <g stroke="#192219" stroke-width="4" fill="none"><path d="M-10 20 L410 30"/><path d="M170 -10 L180 180"/><path d="M330 -10 L350 180"/></g>
+    <rect x="${px-60}" y="64" width="46" height="30" rx="4" fill="#0f3d22" opacity=".7"/>
+    <g transform="translate(${px} 78)"><circle r="26" fill="#00C853" opacity=".15"/><circle r="14" fill="#00C853" opacity=".25"/><path d="M0 14c8-8 11-13 11-19a11 11 0 0 0-22 0c0 6 3 11 11 19z" fill="#00C853" transform="translate(0 -4)"/><circle cy="-13" r="4" fill="#04170B"/></g></svg>
+    <div class="lab">${ic('pin')}<div><b>${a.n}</b><small>${a.area}</small></div><span class="btn">افتح الخريطة</span></div>`;
+}else{
+  document.getElementById('details').style.display='none';
+  document.getElementById('missing').style.display='block';
+}
+</script>
+</body>
+</html>

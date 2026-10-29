@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rabona | الإعدادات</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rabona.css">
+<style>
+.wrap{max-width:720px;margin:auto;padding:18px 16px calc(var(--bar) + 32px + env(safe-area-inset-bottom))}
+@media (min-width:1024px){.wrap{padding-bottom:40px}}
+h1.h{font-size:24px}
+.sub{color:var(--muted);margin:6px 0 14px;font-size:14px}
+.find{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:0 14px;height:46px}
+.find:focus-within{border-color:var(--green)}
+.find input{flex:1;background:none;border:0;outline:0;height:100%;font-size:16px}
+.find svg{color:var(--muted)}
+.g{margin-top:22px}.g>h2{font-size:15px;margin-bottom:10px}
+.gl{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.r{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:58px;width:100%;text-align:start}
+.r+.r{border-top:1px solid var(--line)}
+.r .t{flex:1;min-width:0}.r .t b{display:block;font-weight:500;font-size:15px}.r .t small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.r>svg.i{width:18px;height:18px;color:var(--muted);transform:scaleX(-1)}
+.r.danger b{color:var(--err)}
+.r.off{opacity:.45;pointer-events:none}
+.sw{width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:22px;height:22px;border-radius:50%;background:var(--white);transition:transform .15s}
+.sw[aria-checked=true]{background:var(--green)}
+.sw[aria-checked=true]::after{transform:translateX(-18px)}
+.r select{height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--line);padding:0 10px;max-width:52%;color-scheme:dark;font-size:14px}
+.none{display:none;text-align:center;color:var(--muted);padding:40px 0}
+.toast{position:fixed;inset-inline:16px;bottom:calc(var(--bar) + 16px + env(safe-area-inset-bottom));max-width:360px;margin:auto;background:var(--green);color:#04170B;font-weight:800;padding:10px 16px;border-radius:12px;z-index:60;text-align:center}
+@media (min-width:1024px){.toast{bottom:24px}}
+.mo{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}
+.md{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:400px}
+.md p{color:var(--muted);font-size:14px;line-height:1.8;margin:10px 0 14px}
+.md input{width:100%;height:46px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--line);padding:0 12px;font-size:16px;outline:0}
+.md input:focus{border-color:var(--err)}
+.acts{display:flex;gap:10px;margin-top:16px}.acts .btn{flex:1}
+.acts .btn.del{background:var(--err);color:#fff}.acts .btn.del:disabled{opacity:.65}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1 class="h">الإعدادات</h1>
+  <p class="sub">تحكم في حسابك وخصوصيتك والإشعارات. التغييرات بتتحفظ تلقائياً.</p>
+  <label class="find"><svg class="i"><use href="#search"/></svg><input id="q" type="search" placeholder="ابحث في الإعدادات" autocomplete="off"></label>
+  <div id="list"></div>
+  <p class="none" id="none">مفيش إعداد بالاسم ده.</p>
+</main>
+
+<script src="rabona.js"></script>
+<script>
+const {ic,sendToApp}=Rabona,$=id=>document.getElementById(id);
+Rabona.chrome('settings');
+
+// TODO: load/save these under users/{uid}/settings in Firestore. For now they live in localStorage.
+const KEY='rabona-settings';
+const GOV='القاهرة,الجيزة,الإسكندرية,القليوبية,الشرقية,الدقهلية,الغربية,المنوفية,البحيرة,كفر الشيخ,دمياط,بورسعيد,الإسماعيلية,السويس,الفيوم,بني سويف,المنيا,أسيوط,سوهاج,قنا,الأقصر,أسوان,البحر الأحمر,الوادي الجديد,مطروح,شمال سيناء,جنوب سيناء'.split(',');
+const T=(k,t,d,def,dep)=>({y:'t',k,t,d,def:!!def,dep}),S=(k,t,o,def,dep)=>({y:'s',k,t,o,def,dep}),L=(t,h,d)=>({y:'l',t,h,d}),A=(t,a,d,dg)=>({y:'a',t,a,d,dg});
+const WHO=[['all','الكل'],['fol','المتابعين'],['me','أنا بس']];
+const G=[
+ ['الحساب',[L('تعديل الملف الشخصي','edit-profile.html','الاسم والصورة والمركز'),L('لوحة إدارة الأكاديمية','admin.html','لأصحاب الأكاديميات'),A('تغيير كلمة السر','change_password'),A('تغيير البريد أو رقم الموبايل','change_contact')]],
+ ['الخصوصية',[T('private','حساب خاص','المتابعين المعتمدين بس يشوفوا منشوراتك',0),S('whoPosts','مين يشوف منشوراتي',WHO,'all'),S('whoFollow','مين يقدر يتابعني',[['all','الكل'],['req','بطلب موافقة']],'all'),
+  S('whoComment','مين يعلّق على منشوراتي',[['all','الكل'],['fol','المتابعين'],['off','محدش']],'all'),T('showStats','إظهار إحصائيات اللعب','الماتشات والأهداف في ملفك',1),T('showCity','إظهار مدينتي في الملف',0,1),T('allowTag','السماح بالإشارة لي في المنشورات',0,1),T('showOnline','إظهار آخر ظهور',0,1)]],
+ ['الإشعارات',[T('notif','تشغيل الإشعارات','إيقافه بيقفل كل الإشعارات اللي تحت',1),T('nLikes','الإعجابات',0,1,'notif'),T('nComments','التعليقات والردود',0,1,'notif'),T('nFollows','متابعين جدد',0,1,'notif'),
+  T('nAcademy','منشورات الأكاديميات اللي بتتابعها',0,1,'notif'),T('nTrain','تذكير بمواعيد التمرين',0,1,'notif'),
+  S('trainBefore','وقت تذكير التمرين',[['1h','قبلها بساعة'],['3h','قبلها بـ 3 ساعات'],['1d','قبلها بيوم']],'3h','notif'),
+  T('nRenew','تذكير بتجديد الاشتراك','قبل ما ينتهي بـ 3 أيام',1,'notif'),T('nOffers','العروض والحصص التجريبية المجانية',0,0,'notif'),T('nEmail','إشعارات على البريد الإلكتروني',0,0)]],
+ ['الأكاديميات والاشتراكات',[T('autoRenew','التجديد التلقائي','يجدد اشتراكك أول ما ينتهي',0),T('hideFull','إخفاء الأكاديميات المكتملة','من قايمة الأكاديميات',0),L('اشتراكاتي','profile.html','الاشتراكات النشطة وتاريخ التجديد')]],
+ ['الموقع',[S('city','المحافظة',[['','اختار'],...GOV.map(g=>[g,g])],''),T('useLoc','استخدام موقعي','لاقتراح أقرب أكاديميات',0)]],
+ ['المظهر واللغة',[S('lang','اللغة',[['ar','العربية'],['en','English (قريباً)',1]],'ar'),S('textSize','حجم الخط',[['md','عادي'],['lg','كبير']],'md'),T('reduceMotion','تقليل الحركة','يوقف الأنيميشن والانتقالات',0),T('sounds','أصوات التطبيق',0,1),T('haptics','الاهتزاز عند الضغط',0,1)]],
+ ['الأمان',[T('biometric','قفل التطبيق بالبصمة أو الوجه',0,0),A('تسجيل الخروج من كل الأجهزة','logout_all','لو حسيت إن حد دخل حسابك')]],
+ ['البيانات',[T('dataSaver','توفير البيانات','تقليل تحميل الصور على الشبكة',0),A('مسح الكاش','clear_cache','يمسح البيانات المؤقتة'),A('طلب نسخة من بياناتي','export_data','هتوصلك على بريدك'),A('إرجاع الإعدادات للافتراضي','reset')]],
+ ['الدعم والمعلومات',[A('تواصل مع الدعم','contact_support'),A('تقييم التطبيق','rate_app'),A('سياسة الخصوصية','privacy_policy'),A('الشروط والأحكام','terms')]],
+ ['منطقة حساسة',[A('تسجيل الخروج','logout',0,1),A('حذف الحساب','delete','بيمسح حسابك وبياناتك نهائياً',1)]]];
+
+const D={};G.forEach(g=>g[1].forEach(r=>{if(r.k)D[r.k]=r.y==='t'?r.def:r.def}));
+let st={...D};try{Object.assign(st,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+
+const tx=r=>`<span class="t"><b>${r.t}</b>${r.d?`<small>${r.d}</small>`:''}</span>`;
+function row(r){
+  const off=r.dep&&!st[r.dep]?' off':'',s=`data-s="${r.t} ${r.d||''}"`;
+  if(r.y==='t')return `<div class="r${off}" ${s}>${tx(r)}<button class="sw" role="switch" aria-checked="${st[r.k]}" aria-label="${r.t}" data-k="${r.k}"></button></div>`;
+  if(r.y==='s')return `<div class="r${off}" ${s}>${tx(r)}<select data-k="${r.k}" aria-label="${r.t}">${r.o.map(o=>`<option value="${o[0]}" ${o[0]===st[r.k]?'selected':''} ${o[2]?'disabled':''}>${o[1]}</option>`).join('')}</select></div>`;
+  if(r.y==='l')return `<a class="r" href="${r.h}" ${s}>${tx(r)}${ic('back')}</a>`;
+  return `<button class="r${r.dg?' danger':''}" data-a="${r.a}" ${s}>${tx(r)}${ic('back')}</button>`;
+}
+function draw(){
+  $('list').innerHTML=G.map(g=>`<section class="g"><h2 class="h">${g[0]}</h2><div class="gl">${g[1].map(row).join('')}</div></section>`).join('');
+  find();
+}
+function find(){
+  const q=$('q').value.trim();let n=0;
+  document.querySelectorAll('.g').forEach(g=>{let v=0;g.querySelectorAll('.r').forEach(r=>{const ok=!q||r.dataset.s.includes(q);r.style.display=ok?'':'none';if(ok)v++});g.style.display=v?'':'none';n+=v});
+  $('none').style.display=n?'none':'block';
+}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2000)}
+function set(k,v){st[k]=v;persist();Rabona.applyPrefs();sendToApp({type:'setting',key:k,value:v});draw();toast('اتحفظ')}
+
+function delModal(){
+  const m=document.createElement('div');m.className='mo';
+  m.innerHTML=`<div class="md" role="dialog" aria-modal="true"><h2 class="h">حذف الحساب</h2><p>الحذف نهائي ومش هتقدر ترجعه: هتتمسح منشوراتك وبياناتك وسجل اشتراكاتك. اكتب كلمة <b style="color:var(--white)">حذف</b> للتأكيد.</p>
+   <input id="cf" autocomplete="off" aria-label="اكتب حذف"><div class="acts"><button class="btn ghost" data-x>إلغاء</button><button class="btn del" id="go" disabled>احذف حسابي</button></div></div>`;
+  document.body.append(m);const cf=m.querySelector('#cf'),go=m.querySelector('#go');cf.focus();
+  cf.oninput=()=>{go.disabled=cf.value.trim()!=='حذف'};
+  m.onclick=e=>{if(e.target===m||e.target.hasAttribute('data-x'))m.remove();if(e.target===go&&!go.disabled){sendToApp({type:'delete_account'});m.remove();toast('الطلب اتبعت للتطبيق')}};
+}
+const ACT={
+  logout:()=>{if(confirm('تسجّل خروج؟'))sendToApp({type:'logout'})},
+  delete:delModal,
+  reset:()=>{if(confirm('ترجّع كل الإعدادات للافتراضي؟')){st={...D};persist();Rabona.applyPrefs();sendToApp({type:'settings_reset'});draw();toast('اترجعت الإعدادات')}},
+  clear_cache:()=>{Object.keys(localStorage).filter(k=>k!==KEY).forEach(k=>localStorage.removeItem(k));sendToApp({type:'clear_cache'});toast('اتمسح الكاش')}
+};
+$('list').addEventListener('click',e=>{
+  const sw=e.target.closest('.sw');if(sw)return set(sw.dataset.k,!st[sw.dataset.k]);
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const a=b.dataset.a;if(ACT[a])return ACT[a]();
+  sendToApp({type:a});toast('الطلب اتبعت للتطبيق');
+});
+$('list').addEventListener('change',e=>{if(e.target.matches('select[data-k]'))set(e.target.dataset.k,e.target.value)});
+$('q').oninput=find;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelector('.mo')?.remove()});
+draw();
+</script>
+</body>
+</html>

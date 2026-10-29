@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Rabona | تسجيل الدخول</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--green:#00C853;--black:#0B0B0B;--surface:#151515;--line:#262626;--grey:#8A8A8A;--muted:#9A9A9A;--white:#F5F5F5;--err:#FF5252}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+html{-webkit-text-size-adjust:100%;overscroll-behavior:none}
+body{-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none;background:var(--black);color:var(--white);font-family:'Tajawal',system-ui,sans-serif;display:flex}
+input{-webkit-user-select:text;user-select:text}
+.screen{width:100%;min-height:100vh;min-height:100dvh;background:#080d0a;position:relative;isolation:isolate;overflow:hidden;padding:max(18px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.screen::before{content:"";position:absolute;inset:0 0 auto;height:min(58vh,480px);background:linear-gradient(180deg,rgba(4,12,8,.12) 0%,rgba(4,12,8,.18) 34%,#080d0a 100%),url("images/football-field.jpg") center 54%/cover no-repeat;pointer-events:none;z-index:0}
+.screen::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 28%,rgba(0,200,83,.13),transparent 48%);pointer-events:none;z-index:0}
+.screen>*{position:relative;z-index:1;width:100%;max-width:400px;margin-inline:auto}
+.screen>.logo{width:164px}
+@media (min-width:768px){
+  .screen{justify-content:center;padding-block:48px}
+  .signup{margin-top:0}
+  h1{font-size:32px}
+}
+.logo{display:block;width:164px;aspect-ratio:19/16;object-fit:contain;margin-top:0;filter:drop-shadow(0 8px 26px rgba(0,0,0,.45))}
+.tag{text-align:center;font:600 10px 'Montserrat',sans-serif;letter-spacing:.38em;color:#b8c9be;margin-top:-4px;direction:ltr;text-shadow:0 2px 10px #000}
+.auth-card{margin-top:24px;padding:24px 22px 20px;border:1px solid rgba(220,255,230,.12);border-radius:24px;background:linear-gradient(145deg,rgba(18,27,21,.94),rgba(10,15,12,.96));box-shadow:0 22px 70px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.auth-card::before{content:"";display:block;width:38px;height:3px;border-radius:4px;background:linear-gradient(90deg,var(--green),rgba(0,200,83,0));margin-bottom:18px}
+h1{font-size:28px;font-weight:800;margin-top:0;position:relative;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:15px;margin-top:6px;position:relative}
+form{margin-top:22px;display:flex;flex-direction:column;gap:16px;position:relative}
+label{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
+.field{display:flex;align-items:center;background:rgba(5,9,7,.58);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;height:54px;padding:0 14px;gap:10px;transition:border-color .15s,background .15s,box-shadow .15s}
+.field:focus-within{border-color:var(--green);background:rgba(0,200,83,.045);box-shadow:0 0 0 3px rgba(0,200,83,.09)}
+.field.invalid{border-color:var(--err)}
+.field svg{width:20px;height:20px;flex:none;stroke:var(--grey);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.field:focus-within>svg{stroke:var(--green)}
+input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--white);font:inherit;font-size:16px;height:100%}
+input::placeholder{color:#8A8A8A}
+input[dir=ltr]{text-align:right}
+.eye{background:none;border:0;cursor:pointer;display:grid;place-items:center;padding:6px;border-radius:8px}
+.eye:focus-visible,.btn:focus-visible,a:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.err{color:var(--err);font-size:13px;margin-top:6px;display:none}
+.invalid+.err{display:block}
+.forgot{align-self:flex-start;color:var(--green);font-size:14px;font-weight:500;text-decoration:none;margin-top:-4px}
+.btn{height:56px;border-radius:14px;border:0;font:800 17px 'Tajawal',sans-serif;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn.primary{background:linear-gradient(110deg,#00c853,#2be879);color:#04170B;margin-top:6px;box-shadow:0 9px 24px rgba(0,200,83,.2);transition:transform .1s,filter .15s,box-shadow .15s}
+@media (hover:hover){.btn.primary:hover{filter:brightness(1.08)}}
+.btn.primary:active{transform:scale(.98)}
+.btn.ghost{background:rgba(255,255,255,.035);color:var(--white);border:1px solid rgba(255,255,255,.12);font-weight:700;font-size:16px;transition:background .15s,border-color .15s}
+.btn.ghost:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2)}
+.or{display:flex;align-items:center;gap:12px;color:var(--grey);font-size:13px;margin:18px 0 14px;position:relative}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.signup{text-align:center;color:var(--muted);font-size:14px;margin-top:auto;padding-top:24px;position:relative;text-shadow:0 2px 8px #000}
+.signup a{color:var(--green);font-weight:700;text-decoration:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.panel{display:none}
+@media (min-width:1024px){
+.screen{width:50%;margin:0;padding-inline:48px}
+.screen::before{inset:0;background:radial-gradient(ellipse at 50% 28%,rgba(0,200,83,.14),transparent 55%);height:auto}
+.screen::after{display:none}
+.auth-card{width:100%;max-width:440px!important;margin-top:26px}
+.screen>.logo{width:152px}
+.panel{display:flex;flex-direction:column;justify-content:flex-end;gap:14px;position:fixed;inset-block:0;inset-inline-end:0;width:50%;padding:64px;overflow:hidden;background:#06150d;border-inline-start:1px solid var(--line)}
+.field-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;opacity:.72}
+.panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,18,10,.08) 0%,rgba(4,18,10,.1) 35%,rgba(4,18,10,.84) 76%,#06150d 100%);z-index:1}
+.panel h2,.panel p,.panel .pst{position:relative;z-index:3}
+.panel h2{font-size:48px;line-height:1.2;font-weight:800}
+.panel p{color:#b9c9bf;font-size:17px;line-height:1.8;max-width:420px}
+.pst{display:flex;gap:40px;margin-top:18px}
+.pst b{display:block;font:800 40px/1 'Montserrat',sans-serif;direction:ltr}
+.pst span{font-size:13px;color:#b9c9bf}
+}
+
+/* dark theme text safety: light text on every dark surface */
+:root{color-scheme:dark}
+textarea{font:inherit;color:inherit}
+input,textarea,select{caret-color:var(--green)}
+option,optgroup{background:#1d1d1d;color:#F5F5F5}
+input:-webkit-autofill,input:-webkit-autofill:focus,textarea:-webkit-autofill,select:-webkit-autofill{-webkit-text-fill-color:#F5F5F5;caret-color:#F5F5F5;transition:background-color 9999s ease-out 0s}
+::selection{background:rgba(0,200,83,.35);color:#F5F5F5}
+</style>
+</head>
+<body>
+<aside class="panel" aria-hidden="true">
+  <img class="field-photo" src="images/football-field.jpg" alt="">
+  <h2>كل تمرين<br>يبدأ من هنا</h2><p>اشترك في أكاديميتك، تابع مواعيدك، وشارك لعبك مع لاعبين زيك.</p><div class="pst"><div><b>240+</b><span>لاعب</span></div><div><b>06</b><span>أكاديميات</span></div><div><b>4.8</b><span>متوسط التقييم</span></div></div>
+</aside>
+<main class="screen">
+  <img class="logo" src="images/logo.png" alt="Rabona" onerror="this.style.visibility='hidden'">
+  <p class="tag">BOOK · TRAIN · PLAY</p>
+
+  <section class="auth-card">
+    <h1>أهلاً بيك تاني</h1>
+    <p class="sub">سجّل دخولك واحجز ملعبك أو كمّل في أكاديميتك.</p>
+
+    <form id="login" novalidate>
+    <div>
+      <label for="id">البريد الإلكتروني أو رقم الموبايل</label>
+      <div class="field" id="f-id">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+        <input id="id" type="text" dir="ltr" autocomplete="username" inputmode="email" placeholder="name@example.com">
+      </div>
+      <p class="err">اكتب بريد إلكتروني أو رقم موبايل صحيح.</p>
+    </div>
+    <div>
+      <label for="pw">كلمة السر</label>
+      <div class="field" id="f-pw">
+        <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <input id="pw" type="password" dir="ltr" autocomplete="current-password" placeholder="••••••••">
+        <button type="button" class="eye" id="eye" aria-label="إظهار كلمة السر">
+          <svg viewBox="0 0 24 24" width="20" height="20" style="stroke:var(--grey);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <p class="err">كلمة السر لازم تكون 6 حروف على الأقل.</p>
+    </div>
+    <a href="forgot-password.html" class="forgot">نسيت كلمة السر؟</a>
+    <button class="btn primary" type="submit">تسجيل الدخول</button>
+    </form>
+
+    <div class="or">أو</div>
+    <button class="btn ghost" type="button" id="google">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+    المتابعة بحساب جوجل
+    </button>
+  </section>
+
+  <p class="signup">معندكش حساب؟ <a href="signup.html">سجّل دلوقتي</a></p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+// Bridge to the native app (React Native / Android / iOS WKWebView)
+function sendToApp(msg){
+  const s=JSON.stringify(msg);
+  if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage(s);
+  else if(window.AndroidBridge) window.AndroidBridge.postMessage(s);
+  else if(window.webkit&&webkit.messageHandlers&&webkit.messageHandlers.app) webkit.messageHandlers.app.postMessage(s);
+  else console.log('app bridge not found',msg);
+}
+$('google').onclick=()=>sendToApp({type:'google_login'});
+$('eye').onclick=()=>{const p=$('pw');const s=p.type==='password';p.type=s?'text':'password';$('eye').setAttribute('aria-label',s?'إخفاء كلمة السر':'إظهار كلمة السر')};
+$('login').addEventListener('submit',e=>{
+  e.preventDefault();
+  const v=$('id').value.trim();
+  const okId=/^\S+@\S+\.\S+$/.test(v)||/^\+?\d{10,14}$/.test(v);
+  const okPw=$('pw').value.length>=6;
+  $('f-id').classList.toggle('invalid',!okId);
+  $('f-pw').classList.toggle('invalid',!okPw);
+  if(okId&&okPw){/* TODO: Firebase signInWithEmailAndPassword */ console.log('login ok');}
+});
+</script>
+</body>
+</html>
