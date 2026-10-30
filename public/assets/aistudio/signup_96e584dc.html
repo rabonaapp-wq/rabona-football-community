@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Rabona | إنشاء حساب</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--green:#00C853;--black:#0B0B0B;--surface:#151515;--surface2:#1d1d1d;--line:#262626;--grey:#8A8A8A;--muted:#9A9A9A;--white:#F5F5F5;--err:#FF5252}
+*{box-sizing:border-box;margin:0}
+html{height:100%;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+body{width:100%;height:100%;overflow:hidden;background:var(--black);color:var(--white);font-family:'Tajawal',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+input,select,button{font:inherit;color:inherit}
+input,select{-webkit-user-select:text;user-select:text}
+button{background:none;border:0;cursor:pointer}
+[hidden]{display:none!important}
+a{color:var(--green);text-decoration:none;font-weight:700}
+:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.screen{width:100%;height:100vh;height:100dvh;min-height:0;padding:max(18px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;position:relative;isolation:isolate;overflow-x:hidden;overflow-y:auto;background:#080d0a;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen::before{content:"";position:absolute;inset:0 0 auto;height:min(58vh,480px);background:linear-gradient(180deg,rgba(4,12,8,.12) 0%,rgba(4,12,8,.18) 34%,#080d0a 100%),url("images/football-field.jpg") center 54%/cover no-repeat;pointer-events:none;z-index:0}
+.screen::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 28%,rgba(0,200,83,.13),transparent 48%);pointer-events:none;z-index:0}
+.screen>*{position:relative;z-index:1;width:100%;max-width:420px;margin-inline:auto}
+.top{display:flex;align-items:center;justify-content:center;height:82px;flex:none}
+.back{width:40px;height:40px;border-radius:50%;background:rgba(18,27,21,.88);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.top .back{position:absolute;inset-inline-start:0}
+.back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:scaleX(-1)}
+.brand-logo{display:block;width:94px;height:78px;object-fit:contain;filter:drop-shadow(0 8px 26px rgba(0,0,0,.45))}
+.prog{display:none;margin-top:16px;padding:0 4px}
+.prog.on{display:block}
+.bars{display:flex;gap:6px}.bars i{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.14)}.bars i.on{background:linear-gradient(90deg,#00c853,#2be879);box-shadow:0 0 12px rgba(0,200,83,.36)}
+.prog p{font-size:13px;color:var(--muted);margin-top:8px}
+.step{display:none;flex:0 1 auto;min-height:0;flex-direction:column;overflow-y:auto;scrollbar-width:none;animation:in .22s ease-out}
+.step::-webkit-scrollbar{display:none}
+.step.on{display:flex;margin-top:18px;padding:22px;border:1px solid rgba(220,255,230,.12);border-radius:24px;background:linear-gradient(145deg,rgba(18,27,21,.94),rgba(10,15,12,.96));box-shadow:0 22px 70px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.step.on::before{content:"";display:block;width:38px;height:3px;border-radius:4px;background:linear-gradient(90deg,var(--green),rgba(0,200,83,0));margin-bottom:18px}
+@keyframes in{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+h1{font-size:26px;font-weight:800;margin-top:0;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:15px;margin-top:6px;line-height:1.6}
+.fields{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
+.two>[data-f]{min-width:0}
+label,.lb{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
+.in{display:flex;align-items:center;background:rgba(5,9,7,.58);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;height:54px;padding:0 14px;transition:border-color .15s,background .15s,box-shadow .15s}
+.in:focus-within{border-color:var(--green);background:rgba(0,200,83,.045);box-shadow:0 0 0 3px rgba(0,200,83,.09)}
+.in input,.in select{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;font-size:16px}
+.in select{appearance:none;-webkit-appearance:none}.in select option{background:#151515}
+.in input::placeholder{color:#8A8A8A}
+.bad .in,.bad.opts .opt,.bad.chips .chip{border-color:var(--err)}
+.err{color:var(--err);font-size:13px;margin-top:6px;display:none}.bad>.err{display:block}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{height:84px;border-radius:16px;background:rgba(5,9,7,.58);border:1.5px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:700;font-size:17px;color:var(--white);transition:border-color .15s,background .15s,box-shadow .15s}
+.opt small{font-weight:400;font-size:13px;color:var(--muted)}
+.opt.on{border-color:var(--green);background:rgba(0,200,83,.1);color:var(--green);box-shadow:0 0 0 3px rgba(0,200,83,.08)}
+.type{display:flex;align-items:center;gap:14px;text-align:start;height:auto;padding:18px;justify-content:flex-start}
+.type svg{width:34px;height:34px;stroke:var(--green);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.type span{flex:1}
+.type small{display:block;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{height:42px;padding:0 18px;border-radius:21px;background:var(--surface);border:1.5px solid var(--line);font-weight:500;font-size:15px}
+.chip.on{background:var(--green);border-color:var(--green);color:#04170B;font-weight:700}
+.plan{display:grid;grid-template-columns:1fr 110px 40px;gap:8px;align-items:center;margin-bottom:10px}
+.plan .in{height:50px}
+.del{width:40px;height:40px;border-radius:12px;background:var(--surface);color:var(--muted);font-size:20px}
+.add{height:46px;border-radius:12px;border:1.5px dashed var(--line);color:var(--green);font-weight:700;width:100%}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.nav{display:flex;gap:12px;margin-top:auto;padding-top:28px}
+#nav{position:sticky;bottom:0;z-index:4;flex:none;padding:18px 0 max(8px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(8,13,10,0),#080d0a 35%)}
+.btn{height:56px;border-radius:14px;background:linear-gradient(110deg,#00c853,#2be879);color:#04170B;font-weight:800;font-size:17px;flex:1;box-shadow:0 9px 24px rgba(0,200,83,.2);transition:transform .1s,filter .15s,box-shadow .15s}
+.btn:active{transform:scale(.98)}
+.foot{text-align:center;color:var(--muted);font-size:15px;margin-top:20px;text-shadow:0 2px 8px #000}
+.done{align-items:center;text-align:center;justify-content:center}
+.ok{width:84px;height:84px;border-radius:50%;background:rgba(0,200,83,.15);display:grid;place-items:center;margin-bottom:8px}
+.ok svg{width:40px;height:40px;stroke:var(--green);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.pitchbox{position:relative;width:100%;max-width:300px;aspect-ratio:3/4;margin:4px auto 0;border-radius:18px;border:1.5px solid var(--line);background:repeating-linear-gradient(180deg,#0e3a20 0 12.5%,#0b3019 12.5% 25%);overflow:hidden}
+.pitchbox svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:rgba(255,255,255,.32);stroke-width:1.5}
+.bad .pitchbox{border-color:var(--err)}
+.pp{position:absolute;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(11,11,11,.78);border:2px solid rgba(255,255,255,.35);font-size:12px;font-weight:800;color:var(--white);display:grid;place-items:center;transition:transform .15s,background .15s,border-color .15s}
+.pp:active{transform:scale(.92)}
+.pp.on{background:var(--green);border-color:#fff;color:#04170B;transform:scale(1.12);box-shadow:0 0 0 6px rgba(0,200,83,.25)}
+.possel{text-align:center;color:var(--muted);font-size:14px;margin-top:12px}.possel b{color:var(--green)}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.confetti i{position:absolute;top:-20px;width:8px;height:22px;background:var(--green);transform:skewX(-18deg);animation:fall linear forwards;opacity:.9}
+@keyframes fall{to{transform:translateY(110vh) skewX(-18deg) rotate(200deg);opacity:.2}}
+.done .ok{position:relative;animation:ring 1.4s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(0,200,83,.45)}100%{box-shadow:0 0 0 28px rgba(0,200,83,0)}}
+.done .ok svg{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s .2s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.done h1{font-size:30px}
+@media (min-width:768px){.screen{justify-content:center}.step{flex:none}.nav{margin-top:0;padding-top:24px}h1{font-size:30px}}
+@media (max-width:360px){
+  .screen{padding-inline:14px}
+  .top{height:72px}
+  .step.on{padding:16px;border-radius:20px}
+  .two{grid-template-columns:minmax(0,1fr);gap:14px}
+  .fields{gap:14px}
+}
+@media (hover:hover){.opt:hover,.chip:hover,.back:hover{border-color:#3a3a3a}.btn:hover{filter:brightness(1.08)}}
+@media (prefers-reduced-motion:reduce){.step,.done .ok,.done .ok svg,.confetti i{animation:none!important}.done .ok svg{stroke-dashoffset:0}}
+
+.panel{display:none}
+@media (min-width:1024px){
+.screen{width:50%;height:100vh;height:100dvh;margin:0;padding-inline:48px}
+.screen::before{inset:0;background:radial-gradient(ellipse at 50% 28%,rgba(0,200,83,.14),transparent 55%);height:auto}
+.screen::after{display:none}
+.step.on{width:100%;max-width:420px}
+.prog{width:100%;max-width:420px}
+.nav{width:100%;max-width:420px}
+#nav{position:static;bottom:auto;padding:24px 0 0;background:none}
+.panel{display:flex;flex-direction:column;justify-content:flex-end;gap:14px;position:fixed;inset-block:0;inset-inline-end:0;width:50%;padding:64px;overflow:hidden;background:#06150d;border-inline-start:1px solid var(--line)}
+.field-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;opacity:.72}
+.panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,18,10,.08) 0%,rgba(4,18,10,.1) 35%,rgba(4,18,10,.84) 76%,#06150d 100%);z-index:1}
+.panel h2,.panel p,.panel .pst{position:relative;z-index:3}
+.panel h2{font-size:48px;line-height:1.2;font-weight:800}
+.panel p{color:#b9c9bf;font-size:17px;line-height:1.8;max-width:420px}
+.pst{display:flex;gap:40px;margin-top:18px}
+.pst b{display:block;font:800 40px/1 'Montserrat',sans-serif;direction:ltr}
+.pst span{font-size:13px;color:#b9c9bf}
+}
+
+/* dark theme text safety: light text on every dark surface */
+:root{color-scheme:dark}
+textarea{font:inherit;color:inherit}
+input,textarea,select{caret-color:var(--green)}
+option,optgroup{background:#1d1d1d;color:#F5F5F5}
+input:-webkit-autofill,input:-webkit-autofill:focus,textarea:-webkit-autofill,select:-webkit-autofill{-webkit-text-fill-color:#F5F5F5;caret-color:#F5F5F5;transition:background-color 9999s ease-out 0s}
+::selection{background:rgba(0,200,83,.35);color:#F5F5F5}
+</style>
+</head>
+<body>
+<aside class="panel" aria-hidden="true">
+  <img class="field-photo" src="images/football-field.jpg" alt="">
+  <h2>كل تمرين<br>يبدأ من هنا</h2><p>اشترك في أكاديميتك، تابع مواعيدك، وشارك لعبك مع لاعبين زيك.</p><div class="pst"><div><b>240+</b><span>لاعب</span></div><div><b>06</b><span>أكاديميات</span></div><div><b>4.8</b><span>متوسط التقييم</span></div></div>
+</aside>
+<main class="screen">
+  <div class="top">
+    <button class="back" id="back" aria-label="رجوع"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+    <img class="brand-logo" src="images/logo.png" alt="Rabona">
+  </div>
+  <div class="prog" id="prog"><div class="bars" id="bars"></div><p id="ptxt"></p></div>
+
+  <!-- 0: account type -->
+  <section class="step on" id="s-type">
+    <h1>أهلاً بيك في رابونا</h1>
+    <p class="sub">اختار نوع حسابك عشان نجهّز لك التجربة المناسبة.</p>
+    <div class="fields">
+      <button class="opt type" data-t="player"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 8 3.5 2.5-1.3 4h-4.4l-1.3-4zM12 3v5M3.5 9.5 8.5 10.5M20.5 9.5l-5 1M7 19l2.8-4.5M17 19l-2.8-4.5"/></svg><span>لاعب<small>انشر صورك وأخبارك واشترك في الأكاديميات</small></span></button>
+      <button class="opt type" data-t="academy"><svg viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5M22 9v6"/></svg><span>أكاديمية<small>اعرض أكاديميتك وحدد أسعارك واستقبل اللاعبين</small></span></button>
+    </div>
+    <p class="foot">عندك حساب؟ <a href="login.html">سجّل دخولك</a></p>
+  </section>
+
+  <!-- player -->
+  <section class="step" id="p1"><h1>إحنا نعرفك</h1><p class="sub">اكتب اسمك وتاريخ ميلادك.</p>
+    <div class="fields">
+      <div class="two">
+        <div data-f><label for="fn">الاسم الأول</label><div class="in"><input id="fn" autocomplete="given-name"></div><p class="err">اكتب الاسم الأول.</p></div>
+        <div data-f><label for="ln">الاسم الأخير</label><div class="in"><input id="ln" autocomplete="family-name"></div><p class="err">اكتب الاسم الأخير.</p></div>
+      </div>
+      <div data-f><label for="dob">تاريخ الميلاد</label><div class="in"><input id="dob" type="date"></div><p class="err" id="dobErr">اختار تاريخ ميلاد صحيح.</p></div>
+    </div>
+  </section>
+  <section class="step" id="p2"><h1>إزاي بتلعب؟</h1><p class="sub">اختار قدمك المفضلة ومركزك في الملعب.</p>
+    <div class="fields">
+      <div data-f class="opts" id="foot"><div class="lb" style="grid-column:1/-1;margin:0">القدم المفضلة</div>
+        <button class="opt" data-v="يمنى" type="button">يمنى</button><button class="opt" data-v="يسرى" type="button">يسرى</button><p class="err" style="grid-column:1/-1">اختار القدم المفضلة.</p></div>
+      <div data-f id="pos"><div class="lb">المركز · اضغط على مكانك في الملعب</div><div class="pitchbox"><svg viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true"><rect x="10" y="10" width="280" height="380"/><line x1="10" y1="200" x2="290" y2="200"/><circle cx="150" cy="200" r="38"/><rect x="75" y="10" width="150" height="62"/><rect x="75" y="328" width="150" height="62"/><rect x="115" y="10" width="70" height="26"/><rect x="115" y="364" width="70" height="26"/></svg><button class="pp" data-v="مهاجم" type="button" style="left:50%;top:15%">مهاجم</button><button class="pp" data-v="جناح" type="button" style="left:15%;top:30%">جناح</button><button class="pp" data-v="جناح" type="button" style="left:85%;top:30%">جناح</button><button class="pp" data-v="لاعب وسط" type="button" style="left:50%;top:47%">وسط</button><button class="pp" data-v="ظهير" type="button" style="left:13%;top:64%">ظهير</button><button class="pp" data-v="ظهير" type="button" style="left:87%;top:64%">ظهير</button><button class="pp" data-v="مدافع" type="button" style="left:50%;top:72%">مدافع</button><button class="pp" data-v="حارس مرمى" type="button" style="left:50%;top:90%">حارس</button></div><p class="possel" id="posSel">لسه ما اخترتش مركزك</p><p class="err">اختار مركزك.</p></div>
+    </div>
+  </section>
+  <section class="step" id="p3"><h1>ساكن فين؟</h1><p class="sub">بنستخدم عنوانك عشان نقترح عليك أقرب الأكاديميات.</p>
+    <div class="fields" data-addr="p"></div>
+  </section>
+
+  <!-- academy -->
+  <section class="step" id="a1"><h1>اسم أكاديميتك</h1><p class="sub">ده الاسم اللي هيظهر للاعبين.</p>
+    <div class="fields"><div data-f><label for="an">اسم الأكاديمية</label><div class="in"><input id="an" placeholder="مثال: أكاديمية النجوم"></div><p class="err">اكتب اسم الأكاديمية.</p></div></div>
+  </section>
+  <section class="step" id="a2"><h1>مكان الأكاديمية</h1><p class="sub">عشان اللاعبين يوصلولك بسهولة.</p>
+    <div class="fields" data-addr="a"></div>
+  </section>
+  <section class="step" id="a3"><h1>أسعار الاشتراك</h1><p class="sub">أضف الباقات اللي بتقدمها وسعر كل واحدة. تقدر تعدّلها بعدين.</p>
+    <div class="fields"><div data-f id="plans"><div class="lb" style="display:grid;grid-template-columns:1fr 110px 40px;gap:8px"><span>اسم الباقة</span><span>السعر (ج)</span><span></span></div><div id="plist"></div><button class="add" id="addPlan" type="button">+ إضافة باقة</button><p class="err" id="planErr">أضف باقة واحدة على الأقل باسم وسعر صحيحين.</p></div></div>
+  </section>
+
+  <section class="step done" id="done">
+    <div class="ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></div>
+    <h1 style="margin-top:12px">تم إنشاء حسابك</h1><p class="sub" id="doneTxt"></p>
+    <div class="nav"><button class="btn" onclick="location.href='index.html'">ابدأ الآن</button></div>
+  </section>
+
+  <div class="nav" id="nav" hidden><button class="btn" id="next">التالي</button></div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id), data={}, govs=['القاهرة','الجيزة','الإسكندرية','القليوبية','الشرقية','الدقهلية','الغربية','المنوفية','البحيرة','كفر الشيخ','دمياط','بورسعيد','الإسماعيلية','السويس','الفيوم','بني سويف','المنيا','أسيوط','سوهاج','قنا','الأقصر','أسوان','البحر الأحمر','الوادي الجديد','مطروح','شمال سيناء','جنوب سيناء'];
+const flows={player:['p1','p2','p3'],academy:['a1','a2','a3']};
+let type=null,i=-1; // i=-1 -> type screen
+
+// address fields (shared by player + academy)
+document.querySelectorAll('[data-addr]').forEach(b=>{const k=b.dataset.addr,ph=k==='p'?'الحي، الشارع، رقم العمارة':'اسم الشارع أو أقرب علامة مميزة';
+ b.innerHTML=`<div data-f><label for="${k}gov">المحافظة</label><div class="in"><select id="${k}gov"><option value="">اختار المحافظة</option>${govs.map(g=>`<option>${g}</option>`).join('')}</select></div><p class="err">اختار المحافظة.</p></div>
+ <div data-f><label for="${k}city">المنطقة / المدينة</label><div class="in"><input id="${k}city"></div><p class="err">اكتب المنطقة أو المدينة.</p></div>
+ <div data-f><label for="${k}adr">${k==='p'?'عنوان البيت':'عنوان الأكاديمية'}</label><div class="in"><input id="${k}adr" placeholder="${ph}"></div><p class="err">اكتب العنوان بالتفصيل.</p></div>`});
+
+// single-choice groups
+['foot','pos'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;$(id).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$(id).classList.remove('bad')});
+
+$('pos').addEventListener('click',e=>{const b=e.target.closest('.pp');if(b)$('posSel').innerHTML='مركزك: <b>'+b.dataset.v+'</b>'});
+// plans
+function addPlan(n='',p=''){const d=document.createElement('div');d.className='plan';
+ d.innerHTML=`<div class="in"><input class="pn" placeholder="اشتراك شهري" value="${n}"></div><div class="in"><input class="pp" type="number" inputmode="numeric" min="0" placeholder="0" value="${p}"></div><button class="del" type="button" aria-label="حذف">×</button>`;
+ d.querySelector('.del').onclick=()=>{d.remove()};$('plist').appendChild(d)}
+$('addPlan').onclick=()=>addPlan();addPlan('اشتراك شهري');
+
+const show=id=>{document.querySelectorAll('.step').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelector('.screen').scrollTop=0;scrollTo(0,0)};
+function bad(el,on){el.classList.toggle('bad',on)}
+function need(id,test){const el=$(id).closest('[data-f]'),ok=test($(id).value.trim());bad(el,!ok);return ok}
+const validators={
+ p1(){let a=need('fn',v=>v.length>1),b=need('ln',v=>v.length>1),c=need('dob',v=>{if(!v)return false;const d=new Date(v),n=new Date();return d<n&&n.getFullYear()-d.getFullYear()>=5&&n.getFullYear()-d.getFullYear()<=60});return a&&b&&c},
+ p2(){const f=$('foot').querySelector('.on'),p=$('pos').querySelector('.on');bad($('foot'),!f);bad($('pos'),!p);return !!f&&!!p},
+ p3(){return ['pgov','pcity','padr'].map(id=>need(id,v=>v.length>1)).every(Boolean)},
+ a1(){return need('an',v=>v.length>1)},
+ a2(){return ['agov','acity','aadr'].map(id=>need(id,v=>v.length>1)).every(Boolean)},
+ a3(){const rows=[...document.querySelectorAll('.plan')],ok=rows.length>0&&rows.every(r=>r.querySelector('.pn').value.trim()&&+r.querySelector('.pp').value>0);bad($('plans').closest('[data-f]'),!ok);return ok}};
+
+function go(n){
+  i=n;const flow=flows[type]||[];
+  if(n<0){show('s-type');$('prog').classList.remove('on');$('nav').hidden=true;return}
+  show(flow[n]);$('prog').classList.add('on');$('nav').hidden=false;
+  $('bars').innerHTML=flow.map((_,k)=>`<i class="${k<=n?'on':''}"></i>`).join('');
+  $('ptxt').textContent=`الخطوة ${n+1} من ${flow.length}`;
+  $('next').textContent=n===flow.length-1?'إنشاء الحساب':'التالي';
+}
+document.querySelectorAll('.type').forEach(b=>b.onclick=()=>{type=b.dataset.t;go(0)});
+$('next').onclick=()=>{const flow=flows[type];if(!validators[flow[i]]())return;if(i<flow.length-1)return go(i+1);finish()};
+$('back').onclick=()=>{if(i>=0)go(i-1);else location.href='login.html'};
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&i>=0&&e.target.tagName!=='BUTTON'){e.preventDefault();$('next').click()}});
+
+function burst(){const c=document.createElement('div');c.className='confetti';
+ for(let k=0;k<34;k++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.animationDuration=(2.2+Math.random()*2)+'s';e.style.animationDelay=(Math.random()*.6)+'s';e.style.opacity=.5+Math.random()*.5;if(k%3===0)e.style.background='#F5F5F5';if(k%5===0)e.style.background='#7dffb0';c.appendChild(e)}
+ $('done').appendChild(c);setTimeout(()=>c.remove(),5200)}
+function finish(){
+  const v=id=>$(id).value.trim();
+  data.type=type;
+  if(type==='player')Object.assign(data,{firstName:v('fn'),lastName:v('ln'),birthDate:v('dob'),foot:$('foot').querySelector('.on').dataset.v,position:$('pos').querySelector('.on').dataset.v,address:{governorate:v('pgov'),city:v('pcity'),details:v('padr')}});
+  else Object.assign(data,{academyName:v('an'),location:{governorate:v('agov'),city:v('acity'),details:v('aadr')},plans:[...document.querySelectorAll('.plan')].map(r=>({name:r.querySelector('.pn').value.trim(),price:+r.querySelector('.pp').value}))});
+  // TODO: save this profile to Firestore (users/{uid}) using the uid of the user who just signed in with Google
+  console.log('signup data',data);
+  $('doneTxt').textContent=type==='player'?`أهلاً يا ${data.firstName}، حسابك جاهز وتقدر تبدأ تنشر وتدور على أكاديميتك.`:`أكاديمية ${data.academyName} بقت على رابونا وتقدر تستقبل لاعبين.`;
+  show('done');burst();$('prog').classList.remove('on');$('nav').hidden=true;$('back').style.visibility='hidden';
+}
+</script>
+</body>
+</html>

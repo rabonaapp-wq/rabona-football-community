@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rabona</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rabona.css">
+<style>
+.wrap{max-width:1100px;margin:auto;padding:14px 0 calc(var(--bar) + 28px + env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,640px);justify-content:center;gap:20px}
+.feed{display:flex;flex-direction:column;gap:12px;min-width:0}
+.side{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+
+/* stories */
+.stories{display:flex;gap:14px;overflow-x:auto;padding:2px 16px 6px;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.st{flex:none;width:74px;text-align:center;font-size:12px;color:var(--muted)}
+.ring{width:70px;height:70px;border-radius:50%;padding:2.5px;background:conic-gradient(var(--green),#7dffb0,var(--green));margin:auto}
+.ring.seen{background:var(--line)}
+.ring .av{width:100%;height:100%;border:3px solid var(--black);font-size:26px}
+.ring.acad{border-radius:24px}.ring.acad .av{border-radius:20px}
+.st span.n{display:block;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.add .ring{background:var(--surface2);display:grid;place-items:center;color:var(--green);position:relative}
+.add .ring svg{width:28px;height:28px}
+
+/* composer */
+.comp{margin:0 16px;padding:12px;display:flex;gap:10px;align-items:center}
+.comp .fake{flex:1;height:44px;border-radius:22px;background:var(--surface2);color:var(--muted);text-align:start;padding:0 16px;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* section title */
+.sec{margin:6px 16px 0;font-size:15px;color:var(--white)}
+
+/* post */
+.post{margin:0 16px;overflow:hidden}
+.ph{display:flex;gap:10px;align-items:center;padding:12px 14px}
+.ph .n{font-weight:700;display:flex;align-items:center;gap:6px}
+.ph .m{font-size:12px;color:var(--muted)}
+.more{margin-inline-start:auto;color:var(--muted);background:none!important}
+.txt{padding:0 14px 12px;line-height:1.7;font-size:15.5px}
+.media{aspect-ratio:4/3;cursor:pointer;-webkit-user-select:none;user-select:none}
+.media .over.tl{top:12px;inset-inline-start:0}
+.media .over.br{bottom:12px;inset-inline:14px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.score{font:800 46px/1 'Montserrat',sans-serif;direction:ltr;text-shadow:0 4px 24px rgba(0,0,0,.6);display:flex;align-items:center;gap:8px}
+.score em{font-style:normal;color:var(--green)}
+.score small{display:block;font:600 11px 'Tajawal',sans-serif;color:var(--muted);letter-spacing:.04em;margin-top:6px}
+.who{font-size:12.5px;color:#d6d6d6;text-align:end}
+.pop{position:absolute;inset:0;z-index:4;display:grid;place-items:center;pointer-events:none}
+.pop svg{width:96px;height:96px;fill:var(--green);stroke:none;opacity:0;transform:scale(.3);filter:drop-shadow(0 6px 24px rgba(0,200,83,.6))}
+.pop.go svg{animation:pop .7s ease-out}
+@keyframes pop{0%{opacity:0;transform:scale(.3)}25%{opacity:1;transform:scale(1.15)}60%{opacity:1;transform:scale(.95)}100%{opacity:0;transform:scale(1)}}
+
+/* ad card (academy offer) */
+.cta{display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface2);border-top:1px solid var(--line);position:relative;overflow:hidden}
+.cta::before{content:"";position:absolute;inset-block:0;inset-inline-start:-14px;width:30px;background:var(--green);transform:skewX(var(--skew))}
+.cta .pr{flex:1;padding-inline-start:22px}
+.cta .pr small{display:block;font-size:12.5px;color:var(--muted)}
+.cta .pr .num{font-size:30px;line-height:1.1;margin-top:2px}
+.cta .pr .num i{font:500 13px 'Tajawal',sans-serif;color:var(--muted);font-style:normal;letter-spacing:0;margin-inline-start:4px}
+.cta .pr .free{font-size:22px;font-weight:800;color:var(--green)}
+.cta .btn{height:46px;padding:0 22px}
+
+.stat{display:flex;justify-content:space-between;padding:10px 14px;font-size:13px;color:var(--muted)}
+.act{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.act button{height:46px;display:flex;gap:8px;align-items:center;justify-content:center;color:var(--muted);font-weight:500;font-size:14px;transition:color .15s}
+.act button.on{color:var(--green)}.act button.on svg{fill:var(--green)}
+.act button.on svg{animation:beat .35s ease-out}
+@keyframes beat{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+@media (hover:hover){.act button:hover{background:var(--surface2)}}
+
+/* skeleton */
+.sk-st{display:flex;gap:14px;padding:2px 16px}.sk-st i{width:70px;height:70px;border-radius:50%;flex:none}
+.sk-post{margin:0 16px;padding:14px}
+.sk-post .r{display:flex;gap:10px;align-items:center}
+.sk-post .a{width:44px;height:44px;border-radius:50%}.sk-post .l{height:12px;margin-top:6px}
+.sk-post .m{aspect-ratio:4/3;margin:14px -14px -14px;border-radius:0}
+
+/* side */
+.side h3{font-size:16px;padding:14px 14px 4px}
+.sg{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.sg .t{flex:1;font-size:14px;font-weight:700}.sg small{display:block;color:var(--muted);font-weight:400}
+.sg small b{font:800 13px 'Montserrat',sans-serif;color:var(--white);direction:ltr;display:inline-block}
+.sg .btn{height:34px;padding:0 14px;font-size:13px}
+
+@media (min-width:768px){
+  .wrap{padding-bottom:40px}
+  .stories,.comp,.post,.sec,.sk-post{margin-inline:0}
+  .stories{padding-inline:2px}.sk-st{padding-inline:2px}
+}
+@media (min-width:1024px){
+  .wrap{grid-template-columns:minmax(0,640px) 300px}
+  .side{display:block;position:sticky;top:calc(var(--top) + 16px);align-self:start}
+}
+
+.mini{display:flex;gap:12px;align-items:center;padding:16px 14px 12px}.mini b{display:block}.mini small{color:var(--muted);font-size:12.5px}
+.mst{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line)}.mst div{padding:10px 0;text-align:center}.mst b{display:block;font-size:17px}.mst span{font-size:12px;color:var(--muted)}.mst div+div{border-inline-start:1px solid var(--line)}
+@media (min-width:1024px){
+.wrap{grid-template-columns:minmax(0,680px);gap:28px;padding-top:24px}
+.side{display:none}
+.st{width:88px}.ring{width:82px;height:82px}
+.media{aspect-ratio:16/10}.txt{font-size:16.5px}
+}
+@media (min-width:1280px){.wrap{grid-template-columns:minmax(0,680px) 320px}.side{display:block}}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <main class="feed">
+    <div class="stories" id="stories"></div>
+    <div class="card comp">
+      <div id="meAv"></div>
+      <button class="fake" onclick="location.href='new-post.html'">شارك صورة أو خبر عن لعبك يا كابتن…</button>
+      <button class="ib" aria-label="إضافة صورة" style="color:var(--green)" onclick="location.href='new-post.html'"><svg class="i"><use href="#plus"/></svg></button>
+    </div>
+    <h2 class="h sec">آخر الأخبار</h2>
+    <div id="posts" style="display:contents"></div>
+  </main>
+  <aside class="side card">
+    <div class="mini"><div id="meAv2"></div><div><b>أحمد محمود</b><small>مهاجم · القاهرة</small></div></div>
+    <div class="mst"><div><b class="num">24</b><span>ماتش</span></div><div><b class="num">18</b><span>هدف</span></div><div><b class="num">482</b><span>متابِع</span></div></div>
+    <h3 class="h" style="margin-inline:14px;padding-inline:0">أكاديميات مقترحة</h3>
+    <div id="sug"></div>
+  </aside>
+</div>
+
+<script src="rabona.js"></script>
+<script>
+const {ic,art,av,load}=Rabona;
+Rabona.chrome('home',{search:true});
+
+// TODO: replace with Firestore queries. media = image URL (empty → generated pitch artwork).
+const stories=[
+ {n:'قصتك',add:1},{n:'أكاديمية النجوم',acad:1,s:1},{n:'يوسف علي',s:2},
+ {n:'أكاديمية الأهرام',acad:1,s:3,seen:1},{n:'كريم سامي',s:4},{n:'أكاديمية النصر',acad:1,s:5},{n:'مازن خالد',s:6,seen:1}];
+const posts=[
+ {n:'أكاديمية النجوم',t:'academy',s:1,time:'من ساعتين',txt:'باب الاشتراك اتفتح في دفعة أكتوبر لمواليد 2012 و2013. تدريب 3 أيام في الأسبوع مع مدربين معتمدين.',media:'',price:800,badge:['flame','باقي 6 أماكن','amber'],likes:128,com:24,ai:0},
+ {n:'يوسف علي',t:'player',s:2,time:'من 5 ساعات',txt:'هدف من ماتش امبارح في دوري الناشئين. شغل شهور من التدريب بيبان! ⚽',media:'',score:['3','1','دوري الناشئين'],likes:342,com:57},
+ {n:'كريم سامي',t:'player',s:4,time:'امبارح',txt:'أول يوم ليا في أكاديمية الأهرام. متحمس جداً للموسم الجديد.',media:'',likes:89,com:12},
+ {n:'أكاديمية الأهرام',t:'academy',s:3,time:'امبارح',txt:'ملعب جديد بعشب صناعي ونجيلة حديثة. احجز حصتك التجريبية مجاناً.',media:'',free:'حصة تجريبية مجاناً',badge:['gift','جديد','green'],likes:211,com:31,ai:1}];
+
+const skel=`<div class="sk-post card"><div class="r"><div class="a sk"></div><div style="flex:1"><div class="l sk" style="width:40%"></div><div class="l sk" style="width:22%"></div></div></div><div class="l sk" style="margin-top:14px;width:90%"></div><div class="m sk"></div></div>`.repeat(2);
+const stSkel=`<div class="sk-st">${'<i class="sk"></i>'.repeat(5)}</div>`;
+document.getElementById('meAv').innerHTML=av('أحمد',9,44);document.getElementById('meAv2').innerHTML=av('أحمد',9,52);
+
+load(stSkel,document.getElementById('stories'),()=>{
+  document.getElementById('stories').innerHTML=stories.map(s=>`
+   <button class="st ${s.add?'add':''}"><div class="ring ${s.seen?'seen':''} ${s.acad?'acad':''}">${s.add?ic('plus'):av(s.n,s.s)}</div><span class="n">${s.n}</span></button>`).join('');
+},350);
+
+load(skel,document.getElementById('posts'),()=>{
+  document.getElementById('posts').innerHTML=posts.map((p,i)=>`
+   <article class="card post" data-i="${i}">
+    <div class="ph">${av(p.n,p.s)}
+     <div><div class="n">${p.n}<span class="tag ${p.t==='player'?'pl':''}">${p.t==='academy'?'أكاديمية':'لاعب'}</span></div><div class="m">${p.time}</div></div>
+     <button class="more ib" aria-label="المزيد">${ic('dots')}</button></div>
+    <p class="txt">${p.txt}</p>
+    <div class="media pic" ondblclick="dbl(this,${i},${p.likes})">
+     ${p.media?`<img src="${p.media}" alt="">`:art(p.s*3+i)}
+     ${p.badge?`<span class="over tl badge ${p.badge[2]}">${ic(p.badge[0])}${p.badge[1]}</span>`:''}
+     ${p.score?`<div class="over br"><div class="score">${p.score[0]}<em>–</em>${p.score[1]}<small>${p.score[2]}</small></div><div class="who">⚽ هدفين</div></div>`:''}
+     <div class="pop"><svg viewBox="0 0 24 24"><use href="#heart"/></svg></div>
+    </div>
+    ${p.t==='academy'?`<div class="cta"><div class="pr"><small>${p.free?'عرض خاص':'الاشتراك الشهري'}</small>${p.free?`<span class="free">${p.free}</span>`:`<span class="num">${p.price}<i>ج / شهر</i></span>`}</div><button class="btn" onclick="location.href='academy.html?id=${p.ai}'">اشترك الآن</button></div>`:''}
+    <div class="stat"><span class="lk">${p.likes} إعجاب</span><span>${p.com} تعليق</span></div>
+    <div class="act">
+     <button onclick="like(this,${p.likes})">${ic('heart')}إعجاب</button>
+     <button>${ic('chat')}تعليق</button>
+     <button>${ic('share')}مشاركة</button></div>
+   </article>`).join('');
+});
+
+function like(b,n,force){
+  const on=force!=null?force:b.classList.toggle('on');
+  if(force!=null)b.classList.toggle('on',on);
+  b.closest('.post').querySelector('.lk').textContent=(n+(on?1:0))+' إعجاب';
+}
+function dbl(m,i,n){
+  const p=m.closest('.post'),b=p.querySelector('.act button');
+  if(!b.classList.contains('on'))like(b,n,true);
+  const pop=m.querySelector('.pop');pop.classList.remove('go');void pop.offsetWidth;pop.classList.add('go');
+}
+document.getElementById('sug').innerHTML=[['أكاديمية النصر',800,7],['أكاديمية الشروق',650,8],['أكاديمية الصقور',900,9]].map(a=>`
+ <div class="sg">${av(a[0],a[2])}<div class="t">${a[0]}<small><b>${a[1]}</b> ج / شهر</small></div><button class="btn" onclick="location.href='academies.html'">عرض</button></div>`).join('');
+</script>
+</body>
+</html>

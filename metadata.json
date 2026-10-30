@@ -1,0 +1,8 @@
+{
+  "name": "Rabona",
+  "description": "منصة رابونا لكرة القدم - شبكة اجتماعية للاعبين واشتراكات وحجوزات الأكاديميات الرياضية وإدارتها",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

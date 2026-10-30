@@ -1,0 +1,210 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Base user account profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "photoURL": { "type": "string" },
+        "coverURL": { "type": "string" },
+        "bio": { "type": "string", "maxLength": 500 },
+        "role": { "type": "string", "enum": ["player", "coach", "academy", "admin"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "PlayerProfile": {
+      "title": "PlayerProfile",
+      "description": "Football player specific details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "firstName": { "type": "string", "maxLength": 50 },
+        "lastName": { "type": "string", "maxLength": 50 },
+        "dob": { "type": "string", "maxLength": 20 },
+        "foot": { "type": "string", "enum": ["يمنى", "يسرى"] },
+        "position": { "type": "string", "maxLength": 50 },
+        "governorate": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 200 },
+        "number": { "type": "string", "maxLength": 10 },
+        "matches": { "type": "number" },
+        "goals": { "type": "number" },
+        "assists": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "firstName", "lastName", "foot", "position"]
+    },
+    "CoachProfile": {
+      "title": "CoachProfile",
+      "description": "Football coach specific details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "firstName": { "type": "string", "maxLength": 50 },
+        "lastName": { "type": "string", "maxLength": 50 },
+        "title": { "type": "string", "maxLength": 100 },
+        "experienceYears": { "type": "number" },
+        "specialties": { "type": "array" },
+        "license": { "type": "string", "maxLength": 150 },
+        "governorate": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "venues": { "type": "string", "maxLength": 300 },
+        "plans": { "type": "array" },
+        "ageMin": { "type": "number" },
+        "ageMax": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "firstName", "lastName", "title"]
+    },
+    "Academy": {
+      "title": "Academy",
+      "description": "Sports academy entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "governorate": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 250 },
+        "mapUrl": { "type": "string", "maxLength": 500 },
+        "price": { "type": "number" },
+        "spots": { "type": "number" },
+        "cap": { "type": "number" },
+        "minAge": { "type": "number" },
+        "maxAge": { "type": "number" },
+        "rate": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "categories": { "type": "array" },
+        "plans": { "type": "array" },
+        "formerPlayers": { "type": "array" },
+        "cover": { "type": "string", "maxLength": 1024 },
+        "logo": { "type": "string", "maxLength": 1024 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "ownerUid", "name", "price"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Social feed post",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "authorUid": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorRole": { "type": "string", "maxLength": 50 },
+        "text": { "type": "string", "maxLength": 2000 },
+        "mediaUrl": { "type": "string", "maxLength": 1024 },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "authorUid", "authorName", "text"]
+    },
+    "PostLike": {
+      "title": "PostLike",
+      "description": "Post like record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Training or session booking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userUid": { "type": "string", "maxLength": 128 },
+        "academyId": { "type": "string", "maxLength": 128 },
+        "academyName": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 30 },
+        "time": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userUid", "academyId", "date"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Store customer order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userUid": { "type": "string", "maxLength": 128 },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["new", "processing", "shipped", "delivered", "cancelled"] },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "address": { "type": "string", "maxLength": 300 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userUid", "items", "totalAmount"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userUid": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 150 },
+        "body": { "type": "string", "maxLength": 500 },
+        "type": { "type": "string", "maxLength": 50 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userUid", "title", "body"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Registered users index and accounts"
+    },
+    "/players/{userId}": {
+      "schema": "PlayerProfile",
+      "description": "Player athlete profiles"
+    },
+    "/coaches/{userId}": {
+      "schema": "CoachProfile",
+      "description": "Coach instructor profiles"
+    },
+    "/academies/{academyId}": {
+      "schema": "Academy",
+      "description": "Football and sports academies"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Community social posts"
+    },
+    "/posts/{postId}/likes/{userId}": {
+      "schema": "PostLike",
+      "description": "Post like tracking to prevent duplicate likes"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Academy reservations and training bookings"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Store orders and purchases"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications and alerts"
+    }
+  }
+}
