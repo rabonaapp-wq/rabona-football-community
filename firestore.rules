@@ -74,9 +74,14 @@ service cloud.firestore {
     // Validation for Post
     function isValidPost(data) {
       return data.keys().hasAll(['id', 'authorUid', 'authorName', 'text']) &&
+        data.keys().hasOnly(['id', 'authorUid', 'authorName', 'authorPhoto', 'role', 'text', 'media', 'mediaUrls', 'score', 'likesCount', 'commentsCount', 'sharesCount', 'audience', 'allowComments', 'createdAt', 'updatedAt']) &&
         data.authorUid is string && data.authorUid == request.auth.uid &&
         data.authorName is string && data.authorName.size() <= 100 &&
-        data.text is string && data.text.size() <= 2000;
+        data.text is string && data.text.size() <= 2000 &&
+        (!('media' in data) || data.media is string) &&
+        (!('mediaUrls' in data) || (data.mediaUrls is list && data.mediaUrls.size() <= 4)) &&
+        (!('audience' in data) || data.audience in ['all', 'fol', 'me']) &&
+        (!('allowComments' in data) || data.allowComments is bool);
     }
 
     // Validation for Booking
@@ -155,6 +160,9 @@ service cloud.firestore {
         (existing().authorUid == request.auth.uid && isValidPost(incoming()) && incoming().authorUid == existing().authorUid) ||
         // Action: Like/Unlike count increment
         (incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt']) && isValidId(postId)) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['commentsCount']) &&
+          incoming().commentsCount == existing().commentsCount + 1 &&
+          isValidId(postId)) ||
         isAdmin()
       );
       allow delete: if isAdmin() || (isSignedIn() && existing().authorUid == request.auth.uid);
@@ -165,6 +173,20 @@ service cloud.firestore {
         allow list: if true;
         allow create, update: if isSignedIn() && isOwner(userId);
         allow delete: if isSignedIn() && isOwner(userId);
+      }
+
+      // Subcollection: Comments
+      match /comments/{commentId} {
+        allow get, list: if true;
+        allow create: if isSignedIn() &&
+          incoming().keys().hasAll(['authorUid', 'authorName', 'text', 'createdAt']) &&
+          incoming().keys().hasOnly(['authorUid', 'authorName', 'authorPhoto', 'text', 'parentCommentId', 'likesCount', 'createdAt']) &&
+          incoming().authorUid == request.auth.uid &&
+          incoming().authorName is string && incoming().authorName.size() <= 100 &&
+          incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 1000;
+        allow update: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+        allow delete: if isSignedIn() &&
+          (resource.data.authorUid == request.auth.uid || isAdmin());
       }
     }
 

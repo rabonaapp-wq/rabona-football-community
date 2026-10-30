@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { Icon } from '../components/Icons';
 import { Avatar } from '../components/Avatar';
 import { PageId } from '../components/Navigation';
-import { db } from '../lib/firebase';
+import { db, storage } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
 import { compressImage } from '../utils/imageCompressor';
 
 interface NewPostPageProps {
@@ -125,6 +125,9 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
       role,
       text: text.trim(),
       media: images[0]?.url || '',
+      mediaUrls: [],
+      audience,
+      allowComments,
       score: showScore ? [scoreUs, scoreThem, competition || 'مباراة'] : null,
       likesCount: 0,
       commentsCount: 0,
@@ -133,7 +136,20 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
     };
 
     try {
-      await setDoc(doc(db, 'posts', postId), newPostData);
+      const mediaUrls: string[] = [];
+      for (const image of images) {
+        const response = await fetch(image.url);
+        const blob = await response.blob();
+        const imageRef = ref(storage, `posts/${authorUid}/${postId}/${image.id}.webp`);
+        await uploadBytes(imageRef, blob, { contentType: blob.type || 'image/webp' });
+        mediaUrls.push(await getDownloadURL(imageRef));
+      }
+
+      await setDoc(doc(db, 'posts', postId), {
+        ...newPostData,
+        media: mediaUrls[0] || '',
+        mediaUrls,
+      });
 
       // Cache locally for instant UI update
       const localPost = {
@@ -145,7 +161,7 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
         s: 0,
         time: 'الآن',
         txt: text.trim(),
-        media: images[0]?.url || '',
+        media: mediaUrls[0] || '',
         score: showScore ? [scoreUs, scoreThem, competition || 'مباراة'] : undefined,
         likes: 0,
         com: 0,
@@ -155,11 +171,13 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
       localStorage.setItem('rabona_posts', JSON.stringify([localPost, ...existing]));
       window.dispatchEvent(new Event('rabona_posts_changed'));
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, `posts/${postId}`);
+      console.error('Unable to publish post:', err);
+      setErrorMessage('تعذر نشر المنشور. تأكد من تسجيل الدخول والاتصال بالإنترنت ثم حاول مرة أخرى.');
+      return;
     } finally {
       setIsSubmitting(false);
-      setIsPublished(true);
     }
+    setIsPublished(true);
   };
 
   const resetForm = () => {

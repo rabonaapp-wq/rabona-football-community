@@ -41,11 +41,22 @@ export async function compressImage(
         }
 
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const dataUrl = canvas.toDataURL('image/webp', quality);
         resolve(dataUrl);
       };
       img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   });
+}
+
+export async function compressImageToBlob(
+  file: File,
+  maxWidth = 1600,
+  maxHeight = 1600,
+  quality = 0.82
+): Promise<Blob> {
+  const dataUrl = await compressImage(file, maxWidth, maxHeight, quality);
+  const response = await fetch(dataUrl);
+  return response.blob();
 }

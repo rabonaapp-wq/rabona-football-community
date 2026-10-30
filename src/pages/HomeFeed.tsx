@@ -8,8 +8,6 @@ import {
   deleteDoc,
   doc,
   runTransaction,
-  updateDoc,
-  increment,
   setDoc,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -39,6 +37,7 @@ interface PostItem {
   free?: string;
   badge?: [string, string, string];
   score?: [string, string, string];
+  mediaUrls?: string[];
   who?: string;
   likes: number;
   com: number;
@@ -81,6 +80,41 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
   const [newCommentText, setNewCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
+  useEffect(() => {
+    const postId = activeCommentPost?.id;
+    if (typeof postId !== 'string') return;
+
+    const commentsQuery = query(
+      collection(db, 'posts', postId, 'comments'),
+      orderBy('createdAt', 'asc'),
+      limit(20)
+    );
+    return onSnapshot(
+      commentsQuery,
+      (snapshot) => {
+        const comments: CommentItem[] = snapshot.docs.map((commentDoc) => {
+          const data = commentDoc.data();
+          const createdAt = data.createdAt?.toDate?.();
+          return {
+            id: commentDoc.id,
+            postId,
+            authorUid: data.authorUid || '',
+            authorName: data.authorName || 'كابتن',
+            authorPhoto: data.authorPhoto || '',
+            text: data.text || '',
+            createdAt: createdAt
+              ? createdAt.toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })
+              : 'الآن',
+          };
+        });
+        setCommentsMap((previous) => ({ ...previous, [postId]: comments }));
+      },
+      (error) => {
+        console.error(`Unable to load comments for posts/${postId}:`, error);
+      }
+    );
+  }, [activeCommentPost?.id]);
+
   // Share state
   const [sharePost, setSharePost] = useState<PostItem | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
@@ -116,6 +150,7 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
                 time: formattedTime,
                 txt: data.text || '',
                 media: data.media || '',
+                mediaUrls: Array.isArray(data.mediaUrls) ? data.mediaUrls : data.media ? [data.media] : [],
                 score: data.score || undefined,
                 likes: data.likesCount || 0,
                 com: data.commentsCount || 0,
@@ -239,47 +274,49 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCommentText.trim() || !activeCommentPost) return;
+    if (!authUser) {
+      setShareFeedback('يجب تسجيل الدخول لكتابة تعليق.');
+      return;
+    }
     setIsSubmittingComment(true);
 
-    const commentId = `com_${Date.now()}`;
     const authorName = userProfile?.displayName || authUser?.displayName || authUser?.email?.split('@')[0] || 'كابتن';
     const authorPhoto = userProfile?.photoURL || authUser?.photoURL || '';
+    const postId = String(activeCommentPost.id);
 
-    const commentItem: CommentItem = {
-      id: commentId,
-      postId: activeCommentPost.id,
-      authorUid: authUser?.uid || '',
-      authorName,
-      authorPhoto,
-      text: newCommentText.trim(),
-      createdAt: 'الآن',
-    };
+    try {
+      const postRef = doc(db, 'posts', postId);
+      const commentsRef = collection(db, 'posts', postId, 'comments');
+      await runTransaction(db, async (transaction) => {
+        const postSnapshot = await transaction.get(postRef);
+        if (!postSnapshot.exists()) throw new Error('المنشور غير موجود.');
 
-    const postIdStr = String(activeCommentPost.id);
-    const updatedComments = {
-      ...commentsMap,
-      [postIdStr]: [...(commentsMap[postIdStr] || []), commentItem],
-    };
-    setCommentsMap(updatedComments);
-    localStorage.setItem('rabona_post_comments', JSON.stringify(updatedComments));
-
-    // Update post comment count locally
-    setPosts((prev) =>
-      prev.map((p) => (p.id === activeCommentPost.id ? { ...p, com: p.com + 1 } : p))
-    );
-    setActiveCommentPost((prev) => (prev ? { ...prev, com: prev.com + 1 } : null));
-
-    // Update in Firestore
-    if (typeof activeCommentPost.id === 'string') {
-      try {
-        await updateDoc(doc(db, 'posts', activeCommentPost.id), {
-          commentsCount: increment(1),
+        const commentRef = doc(commentsRef);
+        transaction.set(commentRef, {
+          authorUid: authUser.uid,
+          authorName,
+          authorPhoto,
+          text: newCommentText.trim(),
+          parentCommentId: null,
+          likesCount: 0,
+          createdAt: serverTimestamp(),
         });
-      } catch {}
-    }
+        transaction.update(postRef, {
+          commentsCount: (postSnapshot.data().commentsCount || 0) + 1,
+        });
+      });
 
-    setNewCommentText('');
-    setIsSubmittingComment(false);
+      setPosts((prev) =>
+        prev.map((p) => (p.id === activeCommentPost.id ? { ...p, com: p.com + 1 } : p))
+      );
+      setActiveCommentPost((prev) => (prev ? { ...prev, com: prev.com + 1 } : null));
+      setNewCommentText('');
+    } catch (error) {
+      console.error(`Unable to add comment to posts/${postId}:`, error);
+      setShareFeedback('تعذر نشر التعليق. حاول مرة أخرى.');
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const handleRepostOnRabona = async (p: PostItem) => {
@@ -303,6 +340,7 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
       role,
       text: repostText,
       media: p.media || '',
+      mediaUrls: p.mediaUrls || (p.media ? [p.media] : []),
       likesCount: 0,
       commentsCount: 0,
       createdAt: serverTimestamp(),
