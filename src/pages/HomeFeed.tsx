@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   collection,
   query,
@@ -18,6 +18,7 @@ import { PageId } from '../components/Navigation';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
+import { compressImage } from '../utils/imageCompressor';
 
 interface HomeFeedProps {
   onNavigate: (page: PageId, params?: Record<string, any>) => void;
@@ -55,8 +56,28 @@ interface CommentItem {
   createdAt: string;
 }
 
+interface OwnStory {
+  image: string;
+  seen: boolean;
+}
+
+interface StoryItem {
+  id: string;
+  authorUid: string;
+  authorName: string;
+  authorPhoto: string;
+  image: string;
+  createdAt?: number;
+}
+
 export function HomeFeed({ onNavigate }: HomeFeedProps) {
   const { currentUser: authUser, userProfile } = useAuth();
+  const storyUploadRef = useRef<HTMLInputElement>(null);
+  const [ownStory, setOwnStory] = useState<OwnStory | null>(null);
+  const [stories, setStories] = useState<StoryItem[]>([]);
+  const [activeStory, setActiveStory] = useState<StoryItem | null>(null);
+  const [storyDraft, setStoryDraft] = useState<string | null>(null);
+  const [isPublishingStory, setIsPublishingStory] = useState(false);
 
   const [posts, setPosts] = useState<PostItem[]>(() => {
     try {
@@ -423,6 +444,151 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
   const activeDisplayName =
     userProfile?.displayName || authUser?.displayName || authUser?.email?.split('@')[0] || 'حسابي';
   const activePhoto = userProfile?.photoURL || authUser?.photoURL || '';
+  const storyStorageKey = `rabona_story_${authUser?.uid || userProfile?.uid || 'guest'}`;
+
+  useEffect(() => {
+    try {
+      const savedStory = JSON.parse(localStorage.getItem(storyStorageKey) || 'null');
+      setOwnStory(savedStory?.image ? savedStory : null);
+    } catch (error) {
+      console.error('Unable to load story:', error);
+      setOwnStory(null);
+    }
+  }, [storyStorageKey]);
+
+  useEffect(() => {
+    const storiesQuery = query(collection(db, 'stories'), orderBy('createdAt', 'desc'), limit(50));
+    return onSnapshot(
+      storiesQuery,
+      (snapshot) => {
+        setStories(
+          snapshot.docs
+            .map((storyDoc) => {
+              const data = storyDoc.data();
+              return {
+                id: storyDoc.id,
+                authorUid: data.authorUid || storyDoc.id,
+                authorName: data.authorName || 'لاعب',
+                authorPhoto: data.authorPhoto || '',
+                image: data.image || '',
+                createdAt: data.createdAt?.toDate?.()?.getTime(),
+              };
+            })
+            .filter((story) => story.image)
+        );
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'stories');
+      }
+    );
+  }, []);
+
+  const handleStoryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const image = await compressImage(file, 720, 1280, 0.8);
+      setStoryDraft(image);
+    } catch (error) {
+      console.error('Unable to upload story:', error);
+    }
+  };
+
+  const publishStory = async () => {
+    if (!storyDraft || isPublishingStory) return;
+    const uid = authUser?.uid || userProfile?.uid;
+    if (!uid) {
+      console.error('Unable to publish story: user is not signed in.');
+      return;
+    }
+
+    setIsPublishingStory(true);
+    try {
+      const nextStory = { image: storyDraft, seen: false };
+      await setDoc(doc(db, 'stories', uid), {
+        id: uid,
+        authorUid: uid,
+        authorName: activeDisplayName,
+        authorPhoto: activePhoto,
+        image: storyDraft,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      localStorage.setItem(storyStorageKey, JSON.stringify(nextStory));
+      setOwnStory(nextStory);
+      setStoryDraft(null);
+    } catch (error) {
+      console.error('Unable to publish story:', error);
+    } finally {
+      setIsPublishingStory(false);
+    }
+  };
+
+  const markStorySeen = (story: StoryItem) => {
+    if (story.authorUid === authUser?.uid) {
+      const seenStory = { image: story.image, seen: true };
+      localStorage.setItem(storyStorageKey, JSON.stringify(seenStory));
+      setOwnStory(seenStory);
+      return;
+    }
+
+    localStorage.setItem(`rabona_story_seen_${authUser?.uid || 'guest'}_${story.id}`, '1');
+  };
+
+  const handleStoryClick = (story?: StoryItem) => {
+    if (story) {
+      markStorySeen(story);
+      setActiveStory(story);
+      return;
+    }
+    if (!ownStory) {
+      onNavigate('profile');
+      return;
+    }
+    const seenStory = { ...ownStory, seen: true };
+    localStorage.setItem(storyStorageKey, JSON.stringify(seenStory));
+    setOwnStory(seenStory);
+  };
+
+  const ownRemoteStory = stories.find(
+    (story) => story.authorUid === authUser?.uid || story.authorUid === userProfile?.uid
+  );
+  const storyCards = [
+    ...(ownRemoteStory
+      ? [ownRemoteStory]
+      : ownStory
+        ? [{
+            id: authUser?.uid || userProfile?.uid || 'guest',
+            authorUid: authUser?.uid || userProfile?.uid || 'guest',
+            authorName: activeDisplayName,
+            authorPhoto: activePhoto,
+            image: ownStory.image,
+          }]
+        : []),
+    ...stories.filter((story) => story.authorUid !== (authUser?.uid || userProfile?.uid)),
+  ];
+  const activeStoryIndex = activeStory
+    ? storyCards.findIndex((story) => story.id === activeStory.id)
+    : -1;
+
+  const moveStory = (direction: -1 | 1) => {
+    const nextIndex = activeStoryIndex + direction;
+    if (nextIndex < 0 || nextIndex >= storyCards.length) {
+      setActiveStory(null);
+      return;
+    }
+    const nextStory = storyCards[nextIndex];
+    markStorySeen(nextStory);
+    setActiveStory(nextStory);
+  };
+
+  useEffect(() => {
+    if (!activeStory) return;
+    const timer = window.setTimeout(() => moveStory(1), 6000);
+    return () => window.clearTimeout(timer);
+  }, [activeStory?.id, activeStoryIndex]);
 
   return (
     <div className="wrap-feed">
@@ -430,26 +596,136 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
       <main className="feed">
         {/* Stories row */}
         <div className="stories">
-          <button
-            type="button"
-            onClick={() => onNavigate('profile')}
-            className="st"
-            title="عرض ملفي الشخصي"
-          >
-            <div className="ring">
-              <Avatar
-                name={activeDisplayName}
-                seed={1}
-                size={64}
-                img={activePhoto}
-              />
-              <span className="story-add" aria-hidden="true">
-                +
-              </span>
-            </div>
-            <span className="n">قصتك</span>
-          </button>
+          {storyCards.map((story) => {
+            const isOwnStory = story.authorUid === (authUser?.uid || userProfile?.uid);
+            const seen = isOwnStory
+              ? Boolean(ownStory?.seen)
+              : localStorage.getItem(`rabona_story_seen_${authUser?.uid || 'guest'}_${story.id}`) === '1';
+
+            return (
+              <button
+                type="button"
+                key={story.id}
+                onClick={() => handleStoryClick(story)}
+                className="st"
+                title={isOwnStory ? 'مشاهدة قصتك' : `مشاهدة ستوري ${story.authorName}`}
+              >
+                <div className={`ring ${seen ? 'seen' : ''}`}>
+                  <Avatar name={story.authorName} seed={1} size={64} img={story.image || story.authorPhoto} />
+                  {isOwnStory && (
+                    <span
+                      className="story-add"
+                      role="button"
+                      tabIndex={0}
+                      aria-label="إضافة ستوري"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        storyUploadRef.current?.click();
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          storyUploadRef.current?.click();
+                        }
+                      }}
+                    >
+                      +
+                    </span>
+                  )}
+                </div>
+                <span className="n">{isOwnStory ? 'قصتك' : story.authorName}</span>
+              </button>
+            );
+          })}
+          {!storyCards.length && (
+            <button type="button" onClick={() => onNavigate('profile')} className="st" title="عرض ملفي الشخصي">
+              <div className="ring empty">
+                <Avatar name={activeDisplayName} seed={1} size={64} img={activePhoto} />
+                <span
+                  className="story-add"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="إضافة ستوري"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    storyUploadRef.current?.click();
+                  }}
+                >
+                  +
+                </span>
+              </div>
+              <span className="n">قصتك</span>
+            </button>
+          )}
+          <input
+            ref={storyUploadRef}
+            type="file"
+            accept="image/*"
+            onChange={handleStoryUpload}
+            hidden
+          />
         </div>
+
+        {activeStory && (
+          <div
+            className="story-viewer"
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) setActiveStory(null);
+            }}
+          >
+            <div className="story-viewer-card">
+              <div className="story-progress">
+                {storyCards.map((story) => (
+                  <span key={story.id} className={story.id === activeStory.id ? 'active' : ''} />
+                ))}
+              </div>
+              <button type="button" className="story-close" onClick={() => setActiveStory(null)} aria-label="إغلاق الستوري">
+                ×
+              </button>
+              <button type="button" className="story-nav story-nav-prev" onClick={() => moveStory(-1)} aria-label="الستوري السابقة">
+                ‹
+              </button>
+              <button type="button" className="story-nav story-nav-next" onClick={() => moveStory(1)} aria-label="الستوري التالية">
+                ›
+              </button>
+              <div className="story-viewer-head">
+                <Avatar name={activeStory.authorName} seed={1} size={38} img={activeStory.authorPhoto} />
+                <b>{activeStory.authorName}</b>
+                <small>الآن</small>
+              </div>
+              <img src={activeStory.image} alt={`ستوري ${activeStory.authorName}`} className="story-viewer-image" />
+            </div>
+          </div>
+        )}
+
+        {storyDraft && (
+          <div className="story-editor-backdrop" role="dialog" aria-modal="true">
+            <div className="story-editor">
+              <div className="story-editor-top">
+                <button type="button" onClick={() => setStoryDraft(null)} aria-label="إلغاء">
+                  ×
+                </button>
+                <strong>معاينة الستوري</strong>
+                <span>1/1</span>
+              </div>
+              <div className="story-editor-stage">
+                <img src={storyDraft} alt="معاينة الستوري" />
+                <div className="story-editor-badge">قصتك على رابونا</div>
+              </div>
+              <div className="story-editor-actions">
+                <button type="button" className="story-change" onClick={() => storyUploadRef.current?.click()}>
+                  تغيير الصورة
+                </button>
+                <button type="button" className="story-publish" onClick={publishStory} disabled={isPublishingStory}>
+                  {isPublishingStory ? 'جاري النشر...' : 'نشر الستوري'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Composer box */}
         <div className="card comp">

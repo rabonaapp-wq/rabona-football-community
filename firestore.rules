@@ -190,6 +190,24 @@ service cloud.firestore {
       }
     }
 
+    // Stories
+    match /stories/{storyId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() &&
+        storyId == request.auth.uid &&
+        incoming().keys().hasAll(['id', 'authorUid', 'authorName', 'image', 'createdAt']) &&
+        incoming().keys().hasOnly(['id', 'authorUid', 'authorName', 'authorPhoto', 'image', 'createdAt', 'updatedAt']) &&
+        incoming().id == storyId &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().authorName is string && incoming().authorName.size() <= 100 &&
+        incoming().image is string && incoming().image.size() <= 900000;
+      allow update: if isSignedIn() &&
+        resource.data.authorUid == request.auth.uid &&
+        incoming().authorUid == resource.data.authorUid &&
+        incoming().image is string && incoming().image.size() <= 900000;
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
     // Bookings Collection
     match /bookings/{bookingId} {
       allow get: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
