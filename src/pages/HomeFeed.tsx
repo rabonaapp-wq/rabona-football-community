@@ -9,6 +9,7 @@ import {
   doc,
   runTransaction,
   setDoc,
+  updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
 import { Icon } from '../components/Icons';
@@ -139,6 +140,17 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
   // Share state
   const [sharePost, setSharePost] = useState<PostItem | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  const [openPostMenu, setOpenPostMenu] = useState<string | number | null>(null);
+  const [editingPostId, setEditingPostId] = useState<string | number | null>(null);
+  const [editingPostText, setEditingPostText] = useState('');
+  const [isSavingPost, setIsSavingPost] = useState(false);
+
+  useEffect(() => {
+    if (!shareToast) return;
+    const timeoutId = window.setTimeout(() => setShareToast(null), 2300);
+    return () => window.clearTimeout(timeoutId);
+  }, [shareToast]);
 
   const likeStorageKey = (postId: string | number) =>
     `rabona_likes_${authUser?.uid || 'guest'}_${postId}`;
@@ -282,6 +294,53 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
       }
     }
     setPosts((prev) => prev.filter((p) => p.id !== postId));
+    setOpenPostMenu(null);
+  };
+
+  const handleStartEditingPost = (post: PostItem) => {
+    setEditingPostId(post.id);
+    setEditingPostText(post.txt);
+    setOpenPostMenu(null);
+  };
+
+  const handleSaveEditedPost = async (post: PostItem) => {
+    const text = editingPostText.trim();
+    if (!text || isSavingPost) return;
+
+    setIsSavingPost(true);
+    try {
+      if (typeof post.id === 'string') {
+        await updateDoc(doc(db, 'posts', post.id), {
+          text,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      setPosts((prev) => prev.map((item) => (item.id === post.id ? { ...item, txt: text } : item)));
+      const localPosts = JSON.parse(localStorage.getItem('rabona_posts') || '[]');
+      if (Array.isArray(localPosts)) {
+        localStorage.setItem(
+          'rabona_posts',
+          JSON.stringify(localPosts.map((item: PostItem) => (item.id === post.id ? { ...item, txt: text } : item)))
+        );
+      }
+      setEditingPostId(null);
+      setShareToast('تم تعديل المنشور بنجاح.');
+    } catch (error) {
+      console.error(`Unable to edit posts/${post.id}:`, error);
+      setShareToast('تعذر تعديل المنشور. حاول مرة أخرى.');
+    } finally {
+      setIsSavingPost(false);
+    }
+  };
+
+  const handleSavePost = (postId: string | number) => {
+    const savedPosts = JSON.parse(localStorage.getItem('rabona_saved_posts') || '[]');
+    const savedIds = Array.isArray(savedPosts) ? savedPosts : [];
+    const isSaved = savedIds.includes(postId);
+    const nextSavedIds = isSaved ? savedIds.filter((id) => id !== postId) : [...savedIds, postId];
+    localStorage.setItem('rabona_saved_posts', JSON.stringify(nextSavedIds));
+    setOpenPostMenu(null);
+    setShareToast(isSaved ? 'تمت إزالة المنشور من المحفوظات.' : 'تم حفظ المنشور.');
   };
 
   const handleDoubleClick = (postId: string | number) => {
@@ -388,11 +447,8 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
       localStorage.setItem('rabona_posts', JSON.stringify([localPost, ...existing]));
       window.dispatchEvent(new Event('rabona_posts_changed'));
 
-      setShareFeedback('تمت المشاركة كمنشور على صفحتك بنجاح!');
-      setTimeout(() => {
-        setShareFeedback(null);
-        setSharePost(null);
-      }, 1500);
+      setSharePost(null);
+      setShareToast('تمت مشاركة المنشور على صفحتك بنجاح!');
     } catch {
       setShareFeedback('حدث خطأ أثناء المشاركة.');
       setTimeout(() => setShareFeedback(null), 2000);
@@ -404,17 +460,15 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textToShare)}`;
     window.open(whatsappUrl, '_blank');
     setSharePost(null);
+    setShareToast('تم فتح واتساب لمشاركة المنشور.');
   };
 
   const handleCopyPostLink = () => {
     const postUrl = `${window.location.origin}/#home`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(postUrl);
-      setShareFeedback('تم نسخ الرابط بنجاح!');
-      setTimeout(() => {
-        setShareFeedback(null);
-        setSharePost(null);
-      }, 1500);
+      setSharePost(null);
+      setShareToast('تم نسخ رابط المنشور بنجاح!');
     }
   };
 
@@ -427,6 +481,7 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
           url: `${window.location.origin}/#home`,
         });
         setSharePost(null);
+        setShareToast('تمت مشاركة المنشور بنجاح!');
       } catch {}
     } else {
       handleCopyPostLink();
@@ -791,30 +846,90 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
                     <div className="m">{p.time}</div>
                   </div>
                 </div>
-                {p.authorUid && authUser?.uid === p.authorUid ? (
+                <div style={{ position: 'relative' }}>
                   <button
                     type="button"
                     className="more ib"
-                    aria-label="حذف المنشور"
-                    title="حذف المنشور"
-                    onClick={() => handleDeletePost(p.id)}
-                    style={{ color: 'var(--err)' }}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="more ib"
-                    aria-label="المزيد"
+                    aria-label="خيارات المنشور"
+                    aria-expanded={openPostMenu === p.id}
+                    onClick={() => setOpenPostMenu((current) => (current === p.id ? null : p.id))}
                   >
                     <Icon name="dots" />
                   </button>
-                )}
+                  {openPostMenu === p.id && (
+                    <div
+                      role="menu"
+                      style={{
+                        position: 'absolute',
+                        top: '44px',
+                        insetInlineEnd: 0,
+                        zIndex: 5,
+                        minWidth: '150px',
+                        padding: '6px',
+                        border: '1px solid var(--line)',
+                        borderRadius: '12px',
+                        background: 'var(--surface2)',
+                        boxShadow: '0 10px 24px rgba(0,0,0,.35)',
+                      }}
+                    >
+                      {p.authorUid && authUser?.uid === p.authorUid && (
+                        <>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleStartEditingPost(p)}
+                            style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'right', color: 'var(--white)' }}
+                          >
+                            تعديل
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              handleDeletePost(p.id);
+                            }}
+                            style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'right', color: 'var(--err)' }}
+                          >
+                            حذف
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleSavePost(p.id)}
+                        style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'right', color: 'var(--white)' }}
+                      >
+                        حفظ
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Post Text */}
-              <p className="txt">{p.txt}</p>
+              {editingPostId === p.id ? (
+                <div style={{ display: 'grid', gap: '8px', marginBottom: '14px' }}>
+                  <textarea
+                    value={editingPostText}
+                    onChange={(event) => setEditingPostText(event.target.value)}
+                    maxLength={500}
+                    rows={4}
+                    autoFocus
+                    style={{ width: '100%', padding: '10px', border: '1px solid var(--line)', borderRadius: '10px', background: 'var(--surface2)', resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+                    <button type="button" className="btn" onClick={() => handleSaveEditedPost(p)} disabled={isSavingPost}>
+                      {isSavingPost ? 'جاري الحفظ...' : 'حفظ التعديل'}
+                    </button>
+                    <button type="button" className="btn ghost" onClick={() => setEditingPostId(null)}>
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="txt">{p.txt}</p>
+              )}
 
               {/* Media */}
               <div
@@ -1338,6 +1453,10 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
           </div>
         </div>
       )}
+
+      <div className={`toast ${shareToast ? 'show' : ''}`} role="status" aria-live="polite">
+        {shareToast}
+      </div>
     </div>
   );
 }
