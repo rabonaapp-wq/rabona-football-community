@@ -43,6 +43,8 @@ flowchart LR
 
 Cloud Firestore stores structured application data. Firebase Storage stores uploaded media. Local Storage provides fast local caches for the current profile, academy list, and newly published feed items.
 
+`firestore.indexes.json` contains the composite indexes for the audience-aware feed query. Public profile fields are projected into `publicProfiles/{uid}` so private email, address, and birth data are not used for public profile reads.
+
 ## 3. Navigation and Authentication
 
 `App.tsx` uses `window.location.hash` as the lightweight router. Supported areas include:
@@ -68,6 +70,7 @@ Unauthenticated users are redirected to `login`, except while completing `signup
 
 - `users/{uid}` with `role: player`
 - `players/{uid}` with player-specific details
+- `publicProfiles/{uid}` with safe display fields
 
 ### Coach
 
@@ -75,6 +78,7 @@ Unauthenticated users are redirected to `login`, except while completing `signup
 
 - `users/{uid}` with `role: coach`
 - `coaches/{uid}` with coach-specific details
+- `publicProfiles/{uid}` with safe display fields
 
 ### Academy pages
 
@@ -98,7 +102,7 @@ Academy list pages read public academy records and cache them in `rabona_academi
 | AcademiesPage | Search, filtering, location ranking, academy cards | `academies` |
 | AcademyDetailPage | Public academy page, plans, reviews, map, subscription entry | `academies`, `bookings` |
 | BookingsPage | User academy subscriptions and booking records | `bookings`, `academies` |
-| ProfilePage | User profile, role data, media, activity | `users`, `players`, `coaches`, `posts` |
+| ProfilePage | User profile, role data, media, activity | `publicProfiles`, `users`, `players`, `coaches`, `posts` |
 | StorePage | Store products, cart, orders | `orders` |
 | AdminDashboard | Administrative management and moderation | multiple collections |
 
@@ -122,10 +126,19 @@ Firestore rules provide the server-side authorization boundary:
 - owner-only writes for profiles, posts, bookings, and owned academy pages
 - admin-only operations for protected management actions
 - validation of required fields, roles, IDs, strings, counts, and allowed keys
+- admin access through a Firebase `admin` custom claim or an `admins/{uid}` document
+- audience-aware post reads and atomic like-counter checks
 
 Client-side validation improves UX but is not the security boundary.
 
-## 8. Runtime and Deployment
+## 8. Current Production Gaps
+
+- Firebase Storage is configured in the client and rules are present, but Storage is not enabled in the `rabona-eg` Firebase project.
+- Some existing profile and story flows still use compressed data URLs; migrating them to Storage requires a controlled data migration.
+- Admin custom claims or `admins/{uid}` records must be provisioned through trusted Admin SDK or Console operations.
+- Store products and online payment are not production-enabled; orders remain a pending/manual-payment concern until a trusted catalog and payment flow exist.
+
+## 9. Runtime and Deployment
 
 - Development server: `npm run dev`
 - TypeScript validation: `npm run lint`

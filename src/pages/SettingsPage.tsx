@@ -8,7 +8,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onNavigate }: SettingsPageProps) {
-  const { signOut, userProfile } = useAuth();
+  const { signOut, deleteAccount, isAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -118,7 +118,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               </span>
               <Icon name="back" />
             </button>
-            {userProfile?.role === 'academy' && (
+            {isAdmin && (
               <button
                 type="button"
                 className="r-setting"
@@ -359,9 +359,15 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
                 className="btn"
                 style={{ background: 'var(--err)', color: '#fff' }}
                 disabled={deleteConfirmText.trim() !== 'حذف'}
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  onNavigate('signup');
+                onClick={async () => {
+                  try {
+                    await deleteAccount();
+                    setShowDeleteModal(false);
+                    onNavigate('signup');
+                  } catch (error) {
+                    console.error('Unable to delete account:', error);
+                    setShowDeleteModal(false);
+                  }
                 }}
               >
                 احذف حسابي

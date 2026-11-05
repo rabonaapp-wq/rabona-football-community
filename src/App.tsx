@@ -15,7 +15,7 @@ import { StorePage } from './pages/StorePage';
 import { useAuth } from './context/AuthContext';
 
 export default function App() {
-  const { currentUser, userProfile, loading } = useAuth();
+  const { currentUser, userProfile, isAdmin, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageId>('login');
   const [pageParams, setPageParams] = useState<Record<string, any>>({});
   const [globalSearch, setGlobalSearch] = useState('');
@@ -26,11 +26,11 @@ export default function App() {
       const hash = window.location.hash.replace('#', '');
       const params = new URLSearchParams(window.location.search);
       const academyId = params.get('id');
-      const subscribe = params.get('subscribe');
+      const subscribe = params.get('subscribe') === 'true';
 
       if (academyId !== null) {
         setCurrentPage('academy');
-        setPageParams({ id: academyId, subscribe: Boolean(subscribe) });
+        setPageParams({ id: academyId, subscribe });
         return;
       }
 
@@ -101,7 +101,7 @@ export default function App() {
       window.location.hash = 'login';
       return;
     }
-    if (page === 'admin' && userProfile?.role !== 'academy') {
+    if (page === 'admin' && !isAdmin) {
       setCurrentPage('home');
       window.location.hash = 'home';
       return;

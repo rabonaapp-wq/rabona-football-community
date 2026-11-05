@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
+import { collection, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Icon } from '../components/Icons';
 import { Avatar } from '../components/Avatar';
 import { Stars } from '../components/Stars';
 import { PitchArt } from '../components/PitchArt';
 import { PageId } from '../components/Navigation';
 import { ACADEMIES_DATA, AcademyItem } from './AcademiesPage';
+import { db } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 
 interface AcademyDetailPageProps {
   academyId?: string | number;
@@ -17,6 +20,7 @@ export function AcademyDetailPage({
   autoSubscribe = false,
   onNavigate,
 }: AcademyDetailPageProps) {
+  const { currentUser } = useAuth();
   const academiesList: AcademyItem[] = (() => {
     try {
       const s = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
@@ -25,17 +29,83 @@ export function AcademyDetailPage({
     return ACADEMIES_DATA;
   })();
 
-  const academy: AcademyItem | undefined = academiesList.find((a) => String(a.id) === String(academyId));
+  const [academy, setAcademy] = useState<AcademyItem | undefined>(() =>
+    academiesList.find((a) => String(a.id) === String(academyId))
+  );
+  const [isLoading, setIsLoading] = useState(!academy);
 
   const [activePlanIdx, setActivePlanIdx] = useState(0);
   const [activeDot, setActiveDot] = useState(0);
   const [showSubModal, setShowSubModal] = useState(false);
+  const [bookingState, setBookingState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const plansSectionRef = useRef<HTMLElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    getDoc(doc(db, 'academies', String(academyId)))
+      .then((snapshot) => {
+        if (!active || !snapshot.exists()) return;
+        const data = snapshot.data();
+        setAcademy({
+          id: snapshot.id,
+          n: data.name || 'أكاديمية بدون اسم',
+          area: [data.governorate, data.city].filter(Boolean).join(' - ') || data.address || 'الموقع غير محدد',
+          address: data.address || '',
+          rate: Number(data.rate) || 0,
+          reviews: Number(data.reviewsCount) || 0,
+          min: Number(data.minAge) || 6,
+          max: Number(data.maxAge) || 18,
+          players: Number(data.playersCount) || 0,
+          price: Number(data.price) || 0,
+          spots: Number(data.spots) || 0,
+          cap: Number(data.cap) || 25,
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          cover: data.cover || data.coverURL || '',
+          logo: data.logo || data.photoURL || '',
+          bio: data.bio || '',
+        });
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [academyId]);
 
   const coaches: { name: string; role: string }[] = [];
   const daysSchedule: { day: string; time: string; group: string }[] = [];
   const reviews: { name: string; role: string; rating: number; text: string }[] = [];
+
+  const createBooking = async () => {
+    if (!currentUser || !academy || bookingState === 'saving') return;
+    setBookingState('saving');
+    try {
+      await addDoc(collection(db, 'bookings'), {
+        id: `booking_${Date.now()}`,
+        userUid: currentUser.uid,
+        academyId: String(academy.id),
+        planKey: selectedPlan.key,
+        planName: selectedPlan.title,
+        amount: selectedPlan.price,
+        date: new Date().toISOString(),
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setBookingState('success');
+    } catch (error) {
+      console.error('Unable to create academy booking:', error);
+      setBookingState('error');
+    }
+  };
+
+  if (isLoading) {
+    return <main className="wrap-detail"><section className="missing" style={{ display: 'block', textAlign: 'center', padding: '60px 16px' }}>جار تحميل صفحة الأكاديمية...</section></main>;
+  }
 
   if (!academy) {
     return (
@@ -429,13 +499,15 @@ export function AcademyDetailPage({
                 type="button"
                 className="btn"
                 onClick={() => {
-                  setShowSubModal(false);
-                  onNavigate('signup');
+                  void createBooking();
                 }}
+                disabled={bookingState === 'saving' || bookingState === 'success'}
               >
-                متابعة التسجيل
+                {bookingState === 'saving' ? 'جاري إرسال الطلب...' : bookingState === 'success' ? 'تم إرسال الطلب' : 'إرسال طلب الاشتراك'}
               </button>
             </div>
+            {bookingState === 'success' && <p style={{ color: 'var(--green)', marginTop: '12px' }}>طلبك اتسجل وحالته الآن قيد المراجعة.</p>}
+            {bookingState === 'error' && <p style={{ color: 'var(--err)', marginTop: '12px' }}>تعذر إرسال الطلب. حاول مرة أخرى.</p>}
           </div>
         </div>
       )}

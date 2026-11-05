@@ -29,6 +29,7 @@ flowchart TB
     A[React SPA]
     AUTH[Firebase Authentication]
     USERS[(users)]
+    PUBLIC[(publicProfiles)]
     PLAYERS[(players)]
     COACHES[(coaches)]
     POSTS[(posts)]
@@ -45,6 +46,7 @@ flowchart TB
     AUTH -->|uid and auth state| A
 
     A -->|create or update base profile| USERS
+    A -->|safe public profile projection| PUBLIC
     A -->|player details| PLAYERS
     A -->|coach details| COACHES
 
@@ -149,6 +151,7 @@ flowchart LR
 | Store | Contents | Access pattern |
 | --- | --- | --- |
 | `users` | shared identity, role, profile media, bio | authenticated read; owner/admin write |
+| `publicProfiles` | safe public identity projection for profile pages | public read; owner/admin projection writes |
 | `players` | football identity and location | authenticated read; owner write |
 | `coaches` | coaching profile, specialties, plans | authenticated read; owner write |
 | `academies` | public academy pages, plans, capacity, ratings | public read; owner/admin write |
@@ -164,6 +167,8 @@ flowchart LR
 
 - The browser is a client, not the authorization layer.
 - Firestore and Storage rules must validate ownership and allowed fields.
+- Admin access must come from a Firebase custom claim or trusted `admins/{uid}` record.
 - Signup exposes only `player` and `coach` choices.
 - Academy records remain first-class public pages and can be read independently of signup.
+- Academy bookings are created as `pending` requests and require trusted confirmation before becoming `confirmed`.
 - Uploaded media should be compressed before upload where the feature supports it.

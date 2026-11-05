@@ -31,7 +31,7 @@ export function Navigation({
   searchQuery = '',
   onSearchChange,
 }: NavigationProps) {
-  const { currentUser: authUser, userProfile } = useAuth();
+  const { currentUser: authUser, userProfile, isAdmin } = useAuth();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [cartCount, setCartCount] = useState<number>(0);
 
@@ -345,7 +345,7 @@ export function Navigation({
             <Icon name="gear" />
             الإعدادات
           </button>
-          {userProfile?.role === 'academy' && (
+          {isAdmin && (
             <button
               type="button"
               className={currentPage === 'admin' ? 'on' : ''}

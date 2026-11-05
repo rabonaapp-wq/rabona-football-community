@@ -36,7 +36,7 @@ export function ProfilePage({ onNavigate, viewUid }: ProfilePageProps) {
   useEffect(() => {
     if (!isOwnProfile && viewUid) {
       setIsLoadingOther(true);
-      getDoc(doc(db, 'users', viewUid))
+      getDoc(doc(db, 'publicProfiles', viewUid))
         .then((snapshot) => {
           if (snapshot.exists()) {
             setOtherUser(snapshot.data());
@@ -536,7 +536,7 @@ export function ProfilePage({ onNavigate, viewUid }: ProfilePageProps) {
             <Icon name="gear" />
             الإعدادات
           </button>
-          {userRole === 'academy' && (
+          {userRole === 'admin' && (
             <button type="button" onClick={() => onNavigate('admin')}>
               <Icon name="whistle" />
               لوحة إدارة الأكاديمية

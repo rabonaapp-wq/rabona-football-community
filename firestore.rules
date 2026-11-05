@@ -30,9 +30,18 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email == 'rabonaapp@gmail.com' && request.auth.token.email_verified == true) ||
+        request.auth.token.admin == true ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
+    }
+
+    function isSelfAssignableRole(data) {
+      return !('role' in data) || data.role in ['player', 'coach'];
+    }
+
+    match /admins/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list, create, update, delete: if false;
     }
 
     // Validation for User base doc
@@ -86,25 +95,30 @@ service cloud.firestore {
 
     // Validation for Booking
     function isValidBooking(data) {
-      return data.keys().hasAll(['id', 'userUid', 'academyId', 'date']) &&
+      return data.keys().hasAll(['id', 'userUid', 'academyId', 'date', 'status']) &&
+        data.keys().hasOnly(['id', 'userUid', 'academyId', 'date', 'status', 'planKey', 'planName', 'amount', 'createdAt', 'updatedAt']) &&
         data.userUid is string && data.userUid == request.auth.uid &&
         data.academyId is string && data.academyId.size() <= 128 &&
-        data.date is string && data.date.size() <= 30;
+        data.date is string && data.date.size() <= 30 &&
+        data.status in ['pending', 'confirmed', 'cancelled'] &&
+        (!('amount' in data) || (data.amount is number && data.amount >= 0));
     }
 
     // Validation for Order
     function isValidOrder(data) {
-      return data.keys().hasAll(['id', 'userUid', 'items', 'totalAmount']) &&
+      return data.keys().hasAll(['id', 'userUid', 'items', 'totalAmount', 'status']) &&
+        data.keys().hasOnly(['id', 'userUid', 'items', 'totalAmount', 'status', 'createdAt', 'updatedAt']) &&
         data.userUid is string && data.userUid == request.auth.uid &&
         data.items is list && data.items.size() <= 50 &&
-        data.totalAmount is number && data.totalAmount >= 0;
+        data.totalAmount is number && data.totalAmount >= 0 &&
+        data.status in ['pending', 'confirmed', 'cancelled'];
     }
 
     // Users Collection
     match /users/{userId} {
-      allow get: if isSignedIn();
+      allow get: if isAdmin() || isOwner(userId);
       allow list: if isAdmin();
-      allow create: if isSignedIn() && (isOwner(userId) || isAdmin()) && isValidUser(incoming());
+      allow create: if isSignedIn() && ((isOwner(userId) && isSelfAssignableRole(incoming())) || isAdmin()) && isValidUser(incoming());
       allow update: if isSignedIn() && (
         (isOwner(userId) && isValidUser(incoming()) &&
           (!('uid' in existing()) || incoming().uid == existing().uid) &&
@@ -115,10 +129,21 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Public profile projection. Private email, address, and birth data stay in protected collections.
+    match /publicProfiles/{userId} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if isSignedIn() && (isAdmin() || isOwner(userId)) &&
+        incoming().keys().hasOnly(['uid', 'displayName', 'photoURL', 'coverURL', 'bio', 'role', 'updatedAt']) &&
+        incoming().uid == request.auth.uid &&
+        incoming().role in ['player', 'coach', 'academy', 'admin'];
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
     // Players Collection
     match /players/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get: if isAdmin() || isOwner(userId);
+      allow list: if isAdmin();
       allow create: if isSignedIn() && isOwner(userId) && isValidPlayer(incoming());
       allow update: if isSignedIn() && (
         (isOwner(userId) && isValidPlayer(incoming()) && incoming().uid == existing().uid) ||
@@ -129,8 +154,8 @@ service cloud.firestore {
 
     // Coaches Collection
     match /coaches/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get: if isAdmin() || isOwner(userId);
+      allow list: if isAdmin();
       allow create: if isSignedIn() && isOwner(userId) && isValidCoach(incoming());
       allow update: if isSignedIn() && (
         (isOwner(userId) && isValidCoach(incoming()) && incoming().uid == existing().uid) ||
@@ -153,15 +178,24 @@ service cloud.firestore {
 
     // Posts Collection
     match /posts/{postId} {
-      allow get: if true;
-      allow list: if true;
+      allow get: if isSignedIn() &&
+        (!('audience' in resource.data) || resource.data.audience == 'all' || resource.data.authorUid == request.auth.uid);
+      allow list: if isSignedIn() &&
+        (!('audience' in resource.data) || resource.data.audience == 'all' || resource.data.authorUid == request.auth.uid);
       allow create: if isSignedIn() && isValidPost(incoming());
       allow update: if isSignedIn() && (
         (existing().authorUid == request.auth.uid && isValidPost(incoming()) && incoming().authorUid == existing().authorUid) ||
         // Action: Like/Unlike count increment
-        (incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt']) && isValidId(postId)) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt']) &&
+          incoming().likesCount is number && incoming().likesCount >= 0 &&
+          (incoming().likesCount == existing().likesCount + 1 || incoming().likesCount == existing().likesCount - 1) &&
+          ((incoming().likesCount == existing().likesCount + 1 &&
+            getAfter(/databases/$(database)/documents/posts/$(postId)/likes/$(request.auth.uid)).data.uid == request.auth.uid) ||
+           (incoming().likesCount == existing().likesCount - 1 &&
+            !existsAfter(/databases/$(database)/documents/posts/$(postId)/likes/$(request.auth.uid)))) &&
+          isValidId(postId)) ||
         (incoming().diff(existing()).affectedKeys().hasOnly(['commentsCount']) &&
-          incoming().commentsCount == existing().commentsCount + 1 &&
+          incoming().commentsCount is number && incoming().commentsCount == existing().commentsCount + 1 &&
           isValidId(postId)) ||
         isAdmin()
       );
@@ -171,20 +205,29 @@ service cloud.firestore {
       match /likes/{userId} {
         allow get: if true;
         allow list: if true;
-        allow create, update: if isSignedIn() && isOwner(userId);
+        allow create: if isSignedIn() && isOwner(userId) &&
+          incoming().keys().hasOnly(['uid', 'createdAt']) &&
+          incoming().uid == request.auth.uid;
+        allow update: if false;
         allow delete: if isSignedIn() && isOwner(userId);
       }
 
       // Subcollection: Comments
       match /comments/{commentId} {
-        allow get, list: if true;
+        allow get, list: if isSignedIn() &&
+          (!('audience' in get(/databases/$(database)/documents/posts/$(postId)).data) ||
+            get(/databases/$(database)/documents/posts/$(postId)).data.audience == 'all' ||
+            get(/databases/$(database)/documents/posts/$(postId)).data.authorUid == request.auth.uid);
         allow create: if isSignedIn() &&
           incoming().keys().hasAll(['authorUid', 'authorName', 'text', 'createdAt']) &&
           incoming().keys().hasOnly(['authorUid', 'authorName', 'authorPhoto', 'text', 'parentCommentId', 'likesCount', 'createdAt']) &&
           incoming().authorUid == request.auth.uid &&
           incoming().authorName is string && incoming().authorName.size() <= 100 &&
           incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 1000;
-        allow update: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+        allow update: if isSignedIn() && resource.data.authorUid == request.auth.uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['text', 'updatedAt']) &&
+          incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 1000 &&
+          incoming().authorUid == existing().authorUid;
         allow delete: if isSignedIn() &&
           (resource.data.authorUid == request.auth.uid || isAdmin());
       }
@@ -214,7 +257,9 @@ service cloud.firestore {
     match /bookings/{bookingId} {
       allow get: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && isValidBooking(incoming());
+      allow create: if isSignedIn() && isValidBooking(incoming()) &&
+        incoming().userUid == request.auth.uid &&
+        incoming().status == 'pending';
       allow update: if isSignedIn() && (
         (existing().userUid == request.auth.uid && isValidBooking(incoming()) && incoming().userUid == existing().userUid) ||
         isAdmin()
@@ -226,7 +271,8 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow get: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && isValidOrder(incoming());
+      allow create: if isSignedIn() && isValidOrder(incoming()) &&
+        incoming().userUid == request.auth.uid && incoming().status == 'pending';
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -235,7 +281,7 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow get: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
-      allow create: if isAdmin() || isSignedIn();
+      allow create: if isAdmin();
       allow update: if isSignedIn() && resource.data.userUid == request.auth.uid &&
         incoming().diff(existing()).affectedKeys().hasOnly(['read']);
       allow delete: if isSignedIn() && resource.data.userUid == request.auth.uid;

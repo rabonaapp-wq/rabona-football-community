@@ -5,6 +5,8 @@ import {
   orderBy,
   onSnapshot,
   limit,
+  where,
+  or,
   deleteDoc,
   doc,
   runTransaction,
@@ -160,8 +162,14 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
 
   // Firestore Real-time listener for posts
   useEffect(() => {
+    if (!authUser?.uid) return;
     try {
-      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(50));
+      const q = query(
+        collection(db, 'posts'),
+        or(where('audience', '==', 'all'), where('authorUid', '==', authUser.uid)),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
@@ -204,7 +212,7 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
     } catch (e) {
       console.warn('Firestore subscription not available:', e);
     }
-  }, []);
+  }, [authUser?.uid]);
 
   // Listen to local post changes for instantaneous rendering
   useEffect(() => {

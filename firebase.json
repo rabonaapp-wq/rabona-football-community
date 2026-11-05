@@ -1,6 +1,7 @@
 {
   "firestore": {
     "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json",
     "database": "ai-studio-rabona-7691771b-1bff-4b43-8708-918b23d1d811"
   },
   "storage": {

@@ -4,8 +4,10 @@ import {
   signInWithPopup,
   signOut as fbSignOut,
   onAuthStateChanged,
+  deleteUser,
+  reauthenticateWithPopup,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where, writeBatch } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
 
@@ -28,24 +30,28 @@ export interface UserProfile {
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userProfile: UserProfile | null;
+  isAdmin: boolean;
   loading: boolean;
   isNewUser: boolean;
   signInWithGoogle: () => Promise<UserProfile | null>;
   signOut: () => Promise<void>;
   registerProfile: (role: UserRole, details: any) => Promise<void>;
   updateUserMedia: (photoURL?: string, coverURL?: string, bio?: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   userProfile: null,
+  isAdmin: false,
   loading: true,
   isNewUser: false,
   signInWithGoogle: async () => null,
   signOut: async () => {},
   registerProfile: async () => {},
   updateUserMedia: async () => {},
+  deleteAccount: async () => {},
   refreshProfile: async () => {},
 });
 
@@ -61,9 +67,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchProfile = async (user: FirebaseUser) => {
     try {
+      const token = await user.getIdTokenResult();
+      const adminSnapshot = await getDoc(doc(db, 'admins', user.uid));
+      setIsAdmin(token.claims.admin === true || adminSnapshot.exists());
       const userDocRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userDocRef);
 
@@ -98,6 +108,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUserProfile(profile);
         setIsNewUser(false);
+        void setDoc(doc(db, 'publicProfiles', user.uid), {
+          uid: user.uid,
+          displayName: profile.displayName,
+          photoURL: profile.photoURL || '',
+          coverURL: profile.coverURL || '',
+          bio: profile.bio || '',
+          role: profile.role || 'player',
+          updatedAt: serverTimestamp(),
+        }, { merge: true }).catch((error) => {
+          console.warn('Unable to refresh public profile:', error);
+        });
         localStorage.setItem('rabona_user', JSON.stringify({
           ...profile,
           firstName: roleData?.firstName || profile.displayName.split(' ')[0] || 'لاعب',
@@ -141,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         setUserProfile(null);
         setIsNewUser(false);
+        setIsAdmin(false);
         await fetchProfile(user);
       } else {
         setUserProfile(null);
@@ -174,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(null);
       setUserProfile(null);
       setIsNewUser(false);
+      setIsAdmin(false);
       localStorage.removeItem('rabona_user');
     } catch (error) {
       console.error('Sign Out Error:', error);
@@ -199,6 +222,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: details.bio || '',
         role,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      await setDoc(doc(db, 'publicProfiles', uid), {
+        uid,
+        displayName: details.name || `${details.firstName || ''} ${details.lastName || ''}`.trim() || user.displayName || 'لاعب',
+        photoURL: details.photoURL || user.photoURL || '',
+        coverURL: details.coverURL || '',
+        bio: details.bio || '',
+        role,
         updatedAt: serverTimestamp(),
       });
 
@@ -325,6 +357,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       await setDoc(userRef, fullDoc, { merge: true });
+      await setDoc(doc(db, 'publicProfiles', uid), {
+        uid,
+        displayName: fullDoc.displayName,
+        photoURL: fullDoc.photoURL,
+        coverURL: fullDoc.coverURL,
+        bio: fullDoc.bio,
+        role: fullDoc.role,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
       setUserProfile((prev) => (prev ? {
         ...prev,
         photoURL: fullDoc.photoURL,
@@ -357,6 +398,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const uid = user.uid;
+    await reauthenticateWithPopup(user, googleProvider);
+    const postsSnapshot = await getDocs(query(collection(db, 'posts'), where('authorUid', '==', uid)));
+    const bookingsSnapshot = await getDocs(query(collection(db, 'bookings'), where('userUid', '==', uid)));
+    const refs = [
+      doc(db, 'users', uid),
+      doc(db, 'publicProfiles', uid),
+      doc(db, 'players', uid),
+      doc(db, 'coaches', uid),
+      doc(db, 'academies', uid),
+      ...postsSnapshot.docs.map((post) => post.ref),
+      ...bookingsSnapshot.docs.map((booking) => booking.ref),
+    ];
+
+    for (let index = 0; index < refs.length; index += 450) {
+      const batch = writeBatch(db);
+      refs.slice(index, index + 450).forEach((reference) => batch.delete(reference));
+      await batch.commit();
+    }
+    await deleteUser(user);
+    setCurrentUser(null);
+    setUserProfile(null);
+    setIsNewUser(false);
+    localStorage.clear();
+  };
+
   const refreshProfile = async () => {
     if (auth.currentUser) {
       await fetchProfile(auth.currentUser);
@@ -368,12 +439,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentUser,
         userProfile,
+        isAdmin,
         loading,
         isNewUser,
         signInWithGoogle,
         signOut,
         registerProfile,
         updateUserMedia,
+        deleteAccount,
         refreshProfile,
       }}
     >
