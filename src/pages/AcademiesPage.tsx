@@ -1,9 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { Icon } from '../components/Icons';
 import { Avatar } from '../components/Avatar';
 import { Stars } from '../components/Stars';
 import { PitchArt } from '../components/PitchArt';
 import { PageId } from '../components/Navigation';
+import { db } from '../lib/firebase';
+import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
+import { useAuth } from '../context/AuthContext';
 
 interface AcademiesPageProps {
   onNavigate: (page: PageId, params?: Record<string, any>) => void;
@@ -11,9 +15,10 @@ interface AcademiesPageProps {
 }
 
 export interface AcademyItem {
-  id: number;
+  id: string | number;
   n: string;
   area: string;
+  address?: string;
   rate: number;
   reviews: number;
   min: number;
@@ -32,16 +37,63 @@ export interface AcademyItem {
 export const ACADEMIES_DATA: AcademyItem[] = [];
 
 export function AcademiesPage({ onNavigate, initialQuery = '' }: AcademiesPageProps) {
+  const { userProfile } = useAuth();
   const [search, setSearch] = useState(initialQuery);
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const [academies] = useState<AcademyItem[]>(() => {
+  const [academies, setAcademies] = useState<AcademyItem[]>(() => {
     try {
       const s = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
       if (Array.isArray(s) && s.length > 0) return s;
     } catch {}
     return ACADEMIES_DATA;
   });
+
+  useEffect(() => {
+    const academiesQuery = query(collection(db, 'academies'), orderBy('createdAt', 'desc'));
+    return onSnapshot(
+      academiesQuery,
+      (snapshot) => {
+        const firestoreAcademies: AcademyItem[] = snapshot.docs.map((academyDoc) => {
+          const data = academyDoc.data();
+          return {
+            id: academyDoc.id,
+            n: data.name || 'أكاديمية بدون اسم',
+            area: [data.governorate, data.city].filter(Boolean).join(' - ') || data.address || 'الموقع غير محدد',
+            address: data.address || '',
+            rate: Number(data.rate) || 0,
+            reviews: Number(data.reviewsCount) || 0,
+            min: Number(data.minAge) || 6,
+            max: Number(data.maxAge) || 18,
+            players: Number(data.playersCount) || 0,
+            price: Number(data.price) || 0,
+            spots: Number(data.spots) || 0,
+            cap: Number(data.cap) || 25,
+            categories: Array.isArray(data.categories) ? data.categories : [],
+            cover: data.cover || '',
+            logo: data.logo || '',
+          };
+        });
+        setAcademies(firestoreAcademies);
+        localStorage.setItem('rabona_academies', JSON.stringify(firestoreAcademies));
+      },
+      (error) => handleFirestoreError(error, OperationType.LIST, 'academies')
+    );
+  }, []);
+
+  const normalized = (value: string) => value.trim().toLocaleLowerCase('ar-EG');
+  const userLocation = userProfile?.playerData || userProfile?.coachData;
+  const locationScore = (academy: AcademyItem) => {
+    if (!userLocation) return 0;
+    const academyText = normalized(`${academy.n} ${academy.area} ${academy.address || ''}`);
+    const city = normalized(userLocation.city || '');
+    const governorate = normalized(userLocation.governorate || '');
+    const address = normalized(userLocation.address || '');
+    if (address && academyText.includes(address)) return 4;
+    if (city && academyText.includes(city)) return 3;
+    if (governorate && academyText.includes(governorate)) return 2;
+    return 0;
+  };
 
   const filters = [
     { key: 'all', label: 'الكل' },
@@ -78,10 +130,12 @@ export function AcademiesPage({ onNavigate, initialQuery = '' }: AcademiesPagePr
 
     if (activeFilter === 'p') {
       list = [...list].sort((a, b) => a.price - b.price);
+    } else if (userLocation) {
+      list = [...list].sort((a, b) => locationScore(b) - locationScore(a));
     }
 
     return list;
-  }, [search, activeFilter]);
+  }, [search, activeFilter, academies, userLocation]);
 
   return (
     <main className="wrap-academies">
@@ -140,7 +194,7 @@ export function AcademiesPage({ onNavigate, initialQuery = '' }: AcademiesPagePr
                   {a.cover ? (
                     <img src={a.cover} alt={a.n} />
                   ) : (
-                    <PitchArt seed={a.id * 5 + 2} />
+                    <PitchArt seed={typeof a.id === 'number' ? a.id * 5 + 2 : a.id.length * 5 + 2} />
                   )}
                   <div className="over tl">
                     {a.top === 1 && (
@@ -167,7 +221,7 @@ export function AcademiesPage({ onNavigate, initialQuery = '' }: AcademiesPagePr
                 <div className="logo-academy">
                   <Avatar
                     name={a.n}
-                    seed={a.id * 5 + 2}
+                    seed={(typeof a.id === 'number' ? a.id : a.id.length) * 5 + 2}
                     size={64}
                     isSquare
                     className="w-full h-full"

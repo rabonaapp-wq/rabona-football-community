@@ -7,7 +7,7 @@ import { PageId } from '../components/Navigation';
 import { ACADEMIES_DATA, AcademyItem } from './AcademiesPage';
 
 interface AcademyDetailPageProps {
-  academyId?: number;
+  academyId?: string | number;
   autoSubscribe?: boolean;
   onNavigate: (page: PageId, params?: Record<string, any>) => void;
 }
@@ -25,7 +25,7 @@ export function AcademyDetailPage({
     return ACADEMIES_DATA;
   })();
 
-  const academy: AcademyItem | undefined = academiesList.find((a) => a.id === academyId);
+  const academy: AcademyItem | undefined = academiesList.find((a) => String(a.id) === String(academyId));
 
   const [activePlanIdx, setActivePlanIdx] = useState(0);
   const [activeDot, setActiveDot] = useState(0);
@@ -108,7 +108,7 @@ export function AcademyDetailPage({
         <div ref={galleryRef} onScroll={handleGalleryScroll} className="gal">
           {[0, 1, 2, 3].map((k) => (
             <div key={k} className="pic">
-              <PitchArt seed={academy.id * 5 + 2 + k * 11} />
+              <PitchArt seed={(typeof academy.id === 'number' ? academy.id : academy.id.length) * 5 + 2 + k * 11} />
               {k === 0 && (
                 <div className="over">
                   {academy.top === 1 && (
@@ -145,7 +145,7 @@ export function AcademyDetailPage({
         <div className="head-detail">
           <Avatar
             name={academy.n}
-            seed={academy.id * 5 + 2}
+            seed={(typeof academy.id === 'number' ? academy.id : academy.id.length) * 5 + 2}
             size={68}
             isSquare
             className="rounded-[20px]"
@@ -263,7 +263,7 @@ export function AcademyDetailPage({
               <div key={idx} className="coach">
                 <Avatar
                   name={c.name.replace('كابتن ', '')}
-                  seed={academy.id * 7 + idx + 30}
+                  seed={(typeof academy.id === 'number' ? academy.id : academy.id.length) * 7 + idx + 30}
                   size={64}
                 />
                 <b>{c.name}</b>

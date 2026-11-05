@@ -11,6 +11,7 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { Icon } from '../components/Icons';
 import { Avatar } from '../components/Avatar';
@@ -60,6 +61,7 @@ interface CommentItem {
 interface OwnStory {
   image: string;
   seen: boolean;
+  expiresAt?: number;
 }
 
 interface StoryItem {
@@ -69,6 +71,7 @@ interface StoryItem {
   authorPhoto: string;
   image: string;
   createdAt?: number;
+  expiresAt?: number;
 }
 
 export function HomeFeed({ onNavigate }: HomeFeedProps) {
@@ -504,7 +507,11 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
   useEffect(() => {
     try {
       const savedStory = JSON.parse(localStorage.getItem(storyStorageKey) || 'null');
-      setOwnStory(savedStory?.image ? savedStory : null);
+      setOwnStory(
+        savedStory?.image && savedStory.expiresAt > Date.now()
+          ? savedStory
+          : null
+      );
     } catch (error) {
       console.error('Unable to load story:', error);
       setOwnStory(null);
@@ -527,9 +534,16 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
                 authorPhoto: data.authorPhoto || '',
                 image: data.image || '',
                 createdAt: data.createdAt?.toDate?.()?.getTime(),
+                expiresAt: data.expiresAt?.toDate?.()?.getTime(),
               };
             })
-            .filter((story) => story.image)
+            .filter(
+              (story) =>
+                story.image &&
+                story.expiresAt
+                  ? story.expiresAt > Date.now()
+                  : Boolean(story.createdAt && story.createdAt > Date.now() - 24 * 60 * 60 * 1000)
+            )
         );
       },
       (error) => {
@@ -561,7 +575,8 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
 
     setIsPublishingStory(true);
     try {
-      const nextStory = { image: storyDraft, seen: false };
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      const nextStory = { image: storyDraft, seen: false, expiresAt };
       await setDoc(doc(db, 'stories', uid), {
         id: uid,
         authorUid: uid,
@@ -569,6 +584,7 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
         authorPhoto: activePhoto,
         image: storyDraft,
         createdAt: serverTimestamp(),
+        expiresAt: Timestamp.fromMillis(expiresAt),
         updatedAt: serverTimestamp(),
       });
       localStorage.setItem(storyStorageKey, JSON.stringify(nextStory));
@@ -641,7 +657,7 @@ export function HomeFeed({ onNavigate }: HomeFeedProps) {
 
   useEffect(() => {
     if (!activeStory) return;
-    const timer = window.setTimeout(() => moveStory(1), 6000);
+    const timer = window.setTimeout(() => moveStory(1), 10000);
     return () => window.clearTimeout(timer);
   }, [activeStory?.id, activeStoryIndex]);
 

@@ -195,16 +195,18 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isSignedIn() &&
         storyId == request.auth.uid &&
-        incoming().keys().hasAll(['id', 'authorUid', 'authorName', 'image', 'createdAt']) &&
-        incoming().keys().hasOnly(['id', 'authorUid', 'authorName', 'authorPhoto', 'image', 'createdAt', 'updatedAt']) &&
+        incoming().keys().hasAll(['id', 'authorUid', 'authorName', 'image', 'createdAt', 'expiresAt']) &&
+        incoming().keys().hasOnly(['id', 'authorUid', 'authorName', 'authorPhoto', 'image', 'createdAt', 'expiresAt', 'updatedAt']) &&
         incoming().id == storyId &&
         incoming().authorUid == request.auth.uid &&
         incoming().authorName is string && incoming().authorName.size() <= 100 &&
-        incoming().image is string && incoming().image.size() <= 900000;
+        incoming().image is string && incoming().image.size() <= 900000 &&
+        incoming().expiresAt is timestamp;
       allow update: if isSignedIn() &&
         resource.data.authorUid == request.auth.uid &&
         incoming().authorUid == resource.data.authorUid &&
-        incoming().image is string && incoming().image.size() <= 900000;
+        incoming().image is string && incoming().image.size() <= 900000 &&
+        incoming().expiresAt is timestamp;
       allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
     }
 

@@ -264,6 +264,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
+        try {
+          const cachedAcademies = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
+          const academyItem = {
+            id: uid,
+            n: details.name || '',
+            area: [details.governorate, details.city].filter(Boolean).join(' - '),
+            address: details.address || '',
+            rate: 5,
+            reviews: 0,
+            min: details.ageMin || 6,
+            max: details.ageMax || 18,
+            players: 0,
+            price: details.price || (details.plans?.[0]?.price ? Number(details.plans[0].price) : 800),
+            spots: 20,
+            cap: 25,
+            categories: details.features || [],
+          };
+          const withoutCurrent = Array.isArray(cachedAcademies)
+            ? cachedAcademies.filter((academy: any) => academy.id !== uid)
+            : [];
+          localStorage.setItem('rabona_academies', JSON.stringify([academyItem, ...withoutCurrent]));
+        } catch (cacheError) {
+          console.warn('Unable to cache academy listing:', cacheError);
+        }
       }
 
       await fetchProfile(user);

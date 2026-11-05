@@ -196,8 +196,8 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
     <main style={{ maxWidth: '640px', margin: 'auto', padding: '18px 16px calc(var(--bar) + 32px + env(safe-area-inset-bottom))' }}>
       {!isPublished ? (
         <section id="form">
-          <h1 className="h" style={{ fontSize: '24px', marginBottom: '14px' }}>منشور جديد</h1>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '16px', padding: '14px' }}>
+          <h1 className="h" style={{ fontSize: '24px', marginBottom: '14px' }}>إنشاء منشور</h1>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '12px', padding: '16px' }}>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {(() => {
@@ -210,25 +210,22 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
                 return (
                   <>
                     <Avatar name={displayName} seed={1} size={44} img={photo} />
-                    <div>
-                      <b style={{ display: 'block' }}>{displayName}</b>
-                      <small style={{ color: 'var(--muted)', fontSize: '12.5px' }}>بتنشر دلوقتي</small>
+                    <div style={{ minWidth: 0 }}>
+                      <b style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</b>
+                      <select
+                        value={audience}
+                        onChange={(e) => setAudience(e.target.value)}
+                        aria-label="خصوصية المنشور"
+                        style={{ height: '27px', marginTop: '3px', borderRadius: '6px', background: 'var(--surface2)', border: '1px solid var(--line)', padding: '0 7px', fontSize: '12px' }}
+                      >
+                        <option value="all">🌐 الكل</option>
+                        <option value="fol">👥 المتابعين</option>
+                        <option value="me">🔒 أنا بس</option>
+                      </select>
                     </div>
                   </>
                 );
               })()}
-
-              <select
-                id="aud"
-                value={audience}
-                onChange={(e) => setAudience(e.target.value)}
-                aria-label="مين يشوف المنشور"
-                style={{ marginInlineStart: 'auto', height: '36px', borderRadius: '10px', background: 'var(--surface2)', border: '1px solid var(--line)', padding: '0 10px', fontSize: '14px' }}
-              >
-                <option value="all">الكل</option>
-                <option value="fol">المتابعين</option>
-                <option value="me">أنا بس</option>
-              </select>
             </div>
 
             {/* Textarea */}
@@ -237,7 +234,7 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
               maxLength={MAX_CHARS}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="شارك صورة أو خبر عن لعبك يا كابتن…"
+              placeholder="بم تفكر؟"
               aria-label="نص المنشور"
               style={{ color: 'var(--white)', width: '100%', minHeight: '130px', resize: 'none', background: 'none', border: 0, outline: 0, fontSize: '17px', lineHeight: 1.8, marginTop: '12px' }}
             />
@@ -285,26 +282,28 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
               hidden
             />
 
-            {/* Toolbar */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', borderTop: '1px solid var(--line)', marginTop: '12px', paddingTop: '12px' }}>
+            {/* Facebook-style composer actions */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', borderTop: '1px solid var(--line)', marginTop: '12px', paddingTop: '12px' }}>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                style={{ height: '38px', padding: '0 14px', borderRadius: '19px', background: 'var(--surface2)', border: '1px solid var(--line)', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}
+                style={{ height: '40px', padding: '0 10px', borderRadius: '8px', background: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 700 }}
               >
-                <Icon name="plus" style={{ width: '18px', height: '18px', color: 'var(--green)' }} />
-                صور <span className="num" style={{ fontSize: '12px' }}>{images.length}/{MAX_IMAGES}</span>
+                <span style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(0,200,83,.14)' }}>
+                  <Icon name="plus" style={{ width: '18px', height: '18px', color: 'var(--green)' }} />
+                </span>
+                صورة/فيديو
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowScore(!showScore)}
                 style={{
-                  height: '38px',
-                  padding: '0 14px',
-                  borderRadius: '19px',
-                  background: 'var(--surface2)',
-                  border: showScore ? '1px solid var(--green)' : '1px solid var(--line)',
+                  height: '40px',
+                  padding: '0 10px',
+                  borderRadius: '8px',
+                  background: showScore ? 'rgba(0,200,83,.12)' : 'transparent',
+                  border: 0,
                   color: showScore ? 'var(--green)' : 'var(--white)',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -312,14 +311,16 @@ export function NewPostPage({ onNavigate }: NewPostPageProps) {
                   fontSize: '14px',
                 }}
               >
-                <Icon name="ball" style={{ width: '18px', height: '18px', color: 'var(--green)' }} />
-                نتيجة ماتش
+                <span style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'rgba(255,176,32,.16)' }}>
+                  <Icon name="ball" style={{ width: '18px', height: '18px', color: 'var(--amber)' }} />
+                </span>
+                نتيجة مباراة
               </button>
 
               <span style={{ flex: 1 }} />
 
               {/* Emoji quick bar */}
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', marginInlineStart: 'auto' }}>
                 {emojis.map((e) => (
                   <button
                     key={e}

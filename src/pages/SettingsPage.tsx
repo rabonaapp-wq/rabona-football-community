@@ -8,7 +8,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onNavigate }: SettingsPageProps) {
-  const { signOut } = useAuth();
+  const { signOut, userProfile } = useAuth();
   const [search, setSearch] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -118,17 +118,19 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               </span>
               <Icon name="back" />
             </button>
-            <button
-              type="button"
-              className="r-setting"
-              onClick={() => onNavigate('admin')}
-            >
-              <span className="t">
-                <b>لوحة إدارة الأكاديمية</b>
-                <small>لأصحاب الأكاديميات</small>
-              </span>
-              <Icon name="back" />
-            </button>
+            {userProfile?.role === 'academy' && (
+              <button
+                type="button"
+                className="r-setting"
+                onClick={() => onNavigate('admin')}
+              >
+                <span className="t">
+                  <b>لوحة إدارة الأكاديمية</b>
+                  <small>لأصحاب الأكاديميات</small>
+                </span>
+                <Icon name="back" />
+              </button>
+            )}
             <button
               type="button"
               className="r-setting"

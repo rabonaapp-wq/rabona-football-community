@@ -345,15 +345,17 @@ export function Navigation({
             <Icon name="gear" />
             الإعدادات
           </button>
-          <button
-            type="button"
-            className={currentPage === 'admin' ? 'on' : ''}
-            onClick={() => onNavigate('admin')}
-            style={{ marginTop: '8px', border: '1px solid var(--line)' }}
-          >
-            <Icon name="whistle" />
-            لوحة الإدارة
-          </button>
+          {userProfile?.role === 'academy' && (
+            <button
+              type="button"
+              className={currentPage === 'admin' ? 'on' : ''}
+              onClick={() => onNavigate('admin')}
+              style={{ marginTop: '8px', border: '1px solid var(--line)' }}
+            >
+              <Icon name="whistle" />
+              لوحة الإدارة
+            </button>
+          )}
         </nav>
 
         <button

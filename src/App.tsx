@@ -30,7 +30,7 @@ export default function App() {
 
       if (academyId !== null) {
         setCurrentPage('academy');
-        setPageParams({ id: Number(academyId), subscribe: Boolean(subscribe) });
+        setPageParams({ id: academyId, subscribe: Boolean(subscribe) });
         return;
       }
 
@@ -99,6 +99,11 @@ export default function App() {
     if (!currentUser && page !== 'login' && page !== 'signup') {
       setCurrentPage('login');
       window.location.hash = 'login';
+      return;
+    }
+    if (page === 'admin' && userProfile?.role !== 'academy') {
+      setCurrentPage('home');
+      window.location.hash = 'home';
       return;
     }
     setCurrentPage(page);
