@@ -108,7 +108,11 @@ export function AcademyDetailPage({
         <div ref={galleryRef} onScroll={handleGalleryScroll} className="gal">
           {[0, 1, 2, 3].map((k) => (
             <div key={k} className="pic">
-              <PitchArt seed={(typeof academy.id === 'number' ? academy.id : academy.id.length) * 5 + 2 + k * 11} />
+              {k === 0 && academy.cover ? (
+                <img src={academy.cover} alt={`غلاف ${academy.n}`} />
+              ) : (
+                <PitchArt seed={(typeof academy.id === 'number' ? academy.id : academy.id.length) * 5 + 2 + k * 11} />
+              )}
               {k === 0 && (
                 <div className="over">
                   {academy.top === 1 && (
@@ -148,10 +152,12 @@ export function AcademyDetailPage({
             seed={(typeof academy.id === 'number' ? academy.id : academy.id.length) * 5 + 2}
             size={68}
             isSquare
+            img={academy.logo}
             className="rounded-[20px]"
             style={{ border: '3px solid var(--green)' }}
           />
-          <div>
+          <div className="page-title">
+            <small className="page-label">صفحة أكاديمية</small>
             <h1>{academy.n}</h1>
             <div className="meta-detail">
               <span>
@@ -163,8 +169,20 @@ export function AcademyDetailPage({
                 <span>({academy.reviews})</span>
               </span>
             </div>
+            <p>{academy.bio || `أكاديمية كرة قدم لتطوير اللاعبين من ${academy.min} إلى ${academy.max} سنة.`}</p>
           </div>
         </div>
+
+        <div className="page-actions">
+          <button type="button" className="btn ghost">متابعة</button>
+          <button type="button" className="btn" onClick={() => setShowSubModal(true)}>اشترك الآن</button>
+        </div>
+
+        <nav className="page-tabs" aria-label="أقسام صفحة الأكاديمية">
+          <a href="#about">المنشورات</a>
+          <a href="#about">المعلومات</a>
+          <a href="#location">الموقع</a>
+        </nav>
 
         {/* KPIs */}
         <div className="kpis">
@@ -187,7 +205,7 @@ export function AcademyDetailPage({
         </div>
 
         {/* About */}
-        <section className="s">
+        <section className="s" id="about">
           <h2 className="h">عن الأكاديمية</h2>
           <p className="desc">
             {academy.n} بتدرّب لاعبين من {academy.min} لحد {academy.max} سنة على أيدي مدربين
@@ -315,7 +333,7 @@ export function AcademyDetailPage({
         </section>
 
         {/* Map */}
-        <section className="s">
+        <section className="s" id="location">
           <h2 className="h">الموقع</h2>
           <a
             className="map"

@@ -780,24 +780,6 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
                 <small>قدّم تدريباتك الخاصة وحدد أسعارك واستقبل اللاعبين</small>
               </span>
             </button>
-            <button
-              className="opt type"
-              data-t="academy"
-              type="button"
-              onClick={() => {
-                setAccountType('academy');
-                setStepIndex(0);
-              }}
-            >
-              <svg viewBox="0 0 24 24">
-                <path d="m2 9 10-5 10 5-10 5z" />
-                <path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5M22 9v6" />
-              </svg>
-              <span>
-                أكاديمية
-                <small>اعرض أكاديميتك وحدد أسعارك واستقبل اللاعبين</small>
-              </span>
-            </button>
           </div>
           <p className="foot">
             عندك حساب؟{' '}

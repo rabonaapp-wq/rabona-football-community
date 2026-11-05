@@ -1794,6 +1794,53 @@ svg.i {
   font-weight: 800;
   line-height: 1.25;
 }
+.page-title {
+  min-width: 0;
+  flex: 1;
+}
+.page-label {
+  display: block;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.page-title > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.page-actions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px 0;
+}
+.page-actions .btn {
+  flex: 1;
+}
+.page-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 16px 16px 0;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.page-tabs a {
+  flex: 1;
+  padding: 9px 6px;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.page-tabs a:first-child {
+  background: var(--green);
+  color: #04170B;
+}
 .meta-detail {
   display: flex;
   flex-wrap: wrap;

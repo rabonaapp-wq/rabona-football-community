@@ -32,6 +32,7 @@ export interface AcademyItem {
   categories?: string[];
   cover?: string;
   logo?: string;
+  bio?: string;
 }
 
 export const ACADEMIES_DATA: AcademyItem[] = [];
@@ -71,7 +72,8 @@ export function AcademiesPage({ onNavigate, initialQuery = '' }: AcademiesPagePr
             cap: Number(data.cap) || 25,
             categories: Array.isArray(data.categories) ? data.categories : [],
             cover: data.cover || '',
-            logo: data.logo || '',
+            logo: data.logo || data.photoURL || '',
+            bio: data.bio || '',
           };
         });
         setAcademies(firestoreAcademies);
@@ -224,6 +226,7 @@ export function AcademiesPage({ onNavigate, initialQuery = '' }: AcademiesPagePr
                     seed={(typeof a.id === 'number' ? a.id : a.id.length) * 5 + 2}
                     size={64}
                     isSquare
+                    img={a.logo}
                     className="w-full h-full"
                   />
                 </div>
