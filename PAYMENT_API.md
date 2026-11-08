@@ -32,6 +32,25 @@ PAYMENT_CURRENCY=EGP
 PAYMENT_WEBHOOK_SECRET=<provider webhook secret>
 ```
 
+For the frontend, set `VITE_API_URL` to the public API origin when the API is
+served separately (leave it empty only when the API is reverse-proxied under
+the same origin):
+
+```text
+VITE_API_URL=https://api.your-rabona-domain.example
+```
+
+For UI-only testing before connecting a provider, the demo is enabled by
+default. To disable it and require the real API flow, set:
+
+```text
+VITE_PAYMENT_DEMO=false
+```
+
+The default demo opens a visibly labelled multi-step checkout. It never calls the payment API,
+never marks a payment as `paid`, and never activates a subscription. Remove
+this flag before production.
+
 The current provider adapter intentionally returns
 `PAYMENT_PROVIDER_NOT_CONFIGURED`; this prevents test data from being treated
 as a real payment. Implement the provider-specific hosted-checkout adapter in

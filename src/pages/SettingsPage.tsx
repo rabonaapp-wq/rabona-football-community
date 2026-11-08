@@ -8,7 +8,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onNavigate }: SettingsPageProps) {
-  const { signOut, deleteAccount, isAdmin } = useAuth();
+  const { signOut, deleteAccount, isAdmin, userProfile } = useAuth();
   const [search, setSearch] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -138,6 +138,17 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
             >
               <span className="t">
                 <b>تغيير كلمة السر</b>
+              </span>
+              <Icon name="back" />
+            </button>
+            <button
+              type="button"
+              className="r-setting"
+              onClick={() => onNavigate('signup', { accountType: 'academy' })}
+            >
+              <span className="t">
+                <b>{userProfile?.role === 'academy' ? 'إدارة الأكاديمية' : 'إنشاء أكاديمية'}</b>
+                <small>أنشئ حساب أكاديمية واستقبل اشتراكات اللاعبين</small>
               </span>
               <Icon name="back" />
             </button>

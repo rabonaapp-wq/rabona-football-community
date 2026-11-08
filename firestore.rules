@@ -35,22 +35,24 @@ service cloud.firestore {
       );
     }
 
-    function isSelfAssignableRole(data) {
-      return !('role' in data) || data.role in ['player', 'coach', 'academy'];
-    }
-
     match /admins/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list, create, update, delete: if false;
     }
 
-    // Validation for User base doc
+    // Validation for a user base document. The browser may only create
+    // non-privileged profiles; admin access comes from a trusted claim.
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email']) &&
         data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'coverURL', 'role', 'bio', 'createdAt', 'updatedAt', 'firstName', 'lastName', 'phone', 'id', 'status', 'isRegistered']) &&
         data.uid is string && data.uid == request.auth.uid &&
         data.email is string && data.email.size() <= 256 &&
         (!('role' in data) || data.role in ['player', 'coach', 'academy', 'admin']);
+    }
+
+    function isValidInitialUser(data) {
+      return isValidUser(data) &&
+        (!('role' in data) || data.role in ['player', 'coach', 'academy']);
     }
 
     // Validation for Player profile
@@ -110,25 +112,19 @@ service cloud.firestore {
         get(/databases/$(database)/documents/academies/$(academyId)).data.ownerUid == request.auth.uid;
     }
 
-    // Validation for Order
-    function isValidOrder(data) {
-      return data.keys().hasAll(['id', 'userUid', 'items', 'totalAmount', 'status']) &&
-        data.keys().hasOnly(['id', 'userUid', 'items', 'totalAmount', 'status', 'createdAt', 'updatedAt']) &&
-        data.userUid is string && data.userUid == request.auth.uid &&
-        data.items is list && data.items.size() <= 50 &&
-        data.totalAmount is number && data.totalAmount >= 0 &&
-        data.status in ['pending', 'confirmed', 'cancelled'];
-    }
-
     // Users Collection
     match /users/{userId} {
       allow get: if isAdmin() || isOwner(userId);
       allow list: if isAdmin();
-      allow create: if isSignedIn() && ((isOwner(userId) && isSelfAssignableRole(incoming())) || isAdmin()) && isValidUser(incoming());
+      allow create: if isSignedIn() && isOwner(userId) && isValidInitialUser(incoming());
       allow update: if isSignedIn() && (
         (isOwner(userId) && isValidUser(incoming()) &&
-          (!('uid' in existing()) || incoming().uid == existing().uid) &&
-          (!('role' in existing()) || !('role' in incoming()) || incoming().role == existing().role)
+          incoming().uid == existing().uid &&
+          incoming().email == existing().email &&
+          ((!('role' in existing()) &&
+            (!('role' in incoming()) || incoming().role in ['player', 'coach', 'academy'])) ||
+           ('role' in existing() && 'role' in incoming() && incoming().role == existing().role)) &&
+          (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt)
         ) ||
         isAdmin()
       );

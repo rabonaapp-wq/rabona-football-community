@@ -16,7 +16,8 @@ export type PageId =
   | 'login'
   | 'signup'
   | 'settings'
-  | 'notifications';
+  | 'notifications'
+  | 'demo-checkout';
 
 interface NavigationProps {
   currentPage: PageId;
@@ -125,6 +126,14 @@ export function Navigation({
             >
               <Icon name="user" />
               حسابي
+            </button>
+            <button
+              type="button"
+              className={currentPage === 'settings' ? 'on' : ''}
+              onClick={() => onNavigate('settings')}
+            >
+              <Icon name="gear" />
+              الإعدادات
             </button>
           </nav>
 
@@ -249,6 +258,14 @@ export function Navigation({
           >
             <Icon name="user" />
             حسابي
+          </button>
+          <button
+            type="button"
+            className={currentPage === 'settings' ? 'on' : ''}
+            onClick={() => onNavigate('settings')}
+          >
+            <Icon name="gear" />
+            الإعدادات
           </button>
         </div>
       </nav>

@@ -213,6 +213,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // 1. Create User root doc
       const userRef = doc(db, 'users', uid);
+      const existingUserSnapshot = await getDoc(userRef);
+      const existingUser = existingUserSnapshot.exists() ? existingUserSnapshot.data() : null;
       await setDoc(userRef, {
         uid,
         email: user.email || '',
@@ -221,9 +223,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         coverURL: details.coverURL || '',
         bio: details.bio || '',
         role,
-        createdAt: serverTimestamp(),
+        createdAt: existingUser?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      }, { merge: true });
       await setDoc(doc(db, 'publicProfiles', uid), {
         uid,
         displayName: details.name || `${details.firstName || ''} ${details.lastName || ''}`.trim() || user.displayName || 'لاعب',
@@ -319,6 +321,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             cap: 25,
             categories: details.features || [],
           };
+
           const withoutCurrent = Array.isArray(cachedAcademies)
             ? cachedAcademies.filter((academy: any) => academy.id !== uid)
             : [];
