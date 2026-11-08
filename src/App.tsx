@@ -12,6 +12,7 @@ import { SignupPage } from './pages/SignupPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { StorePage } from './pages/StorePage';
+import { DemoCheckoutPage } from './pages/DemoCheckoutPage';
 import { useAuth } from './context/AuthContext';
 
 export default function App() {
@@ -54,6 +55,7 @@ export default function App() {
           'signup',
           'settings',
           'notifications',
+          'demo-checkout',
         ].includes(hash)
       ) {
         setCurrentPage(hash as PageId);
@@ -178,10 +180,23 @@ export default function App() {
         {currentPage === 'new-post' && <NewPostPage onNavigate={navigateTo} />}
         {currentPage === 'admin' && <AdminDashboard onNavigate={navigateTo} />}
         {currentPage === 'login' && <LoginPage onNavigate={navigateTo} />}
-        {currentPage === 'signup' && <SignupPage onNavigate={navigateTo} />}
+        {currentPage === 'signup' && (
+          <SignupPage
+            onNavigate={navigateTo}
+            initialAccountType={pageParams.accountType}
+          />
+        )}
         {currentPage === 'settings' && <SettingsPage onNavigate={navigateTo} />}
         {currentPage === 'notifications' && (
           <NotificationsPage onNavigate={navigateTo} />
+        )}
+        {currentPage === 'demo-checkout' && (
+          <DemoCheckoutPage
+            onNavigate={navigateTo}
+            academyName={pageParams.academyName || 'أكاديمية'}
+            planName={pageParams.planName || 'اشتراك'}
+            amount={Number(pageParams.amount) || 0}
+          />
         )}
       </main>
     </div>

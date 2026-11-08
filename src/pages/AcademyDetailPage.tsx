@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Icon } from '../components/Icons';
 import { Avatar } from '../components/Avatar';
 import { Stars } from '../components/Stars';
@@ -8,6 +8,8 @@ import { PageId } from '../components/Navigation';
 import { ACADEMIES_DATA, AcademyItem } from './AcademiesPage';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { createPayment } from '../lib/paymentApi';
+import { DemoCheckoutPage } from './DemoCheckoutPage';
 
 interface AcademyDetailPageProps {
   academyId?: string | number;
@@ -37,6 +39,7 @@ export function AcademyDetailPage({
   const [activePlanIdx, setActivePlanIdx] = useState(0);
   const [activeDot, setActiveDot] = useState(0);
   const [showSubModal, setShowSubModal] = useState(false);
+  const [showDemoCheckout, setShowDemoCheckout] = useState(false);
   const [bookingState, setBookingState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const plansSectionRef = useRef<HTMLElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -84,18 +87,18 @@ export function AcademyDetailPage({
     if (!currentUser || !academy || bookingState === 'saving') return;
     setBookingState('saving');
     try {
-      await addDoc(collection(db, 'bookings'), {
-        id: `booking_${Date.now()}`,
-        userUid: currentUser.uid,
+      if (import.meta.env.VITE_PAYMENT_DEMO !== 'false') {
+        setShowDemoCheckout(true);
+        setBookingState('idle');
+        setShowSubModal(false);
+        return;
+      }
+      const payment = await createPayment({
         academyId: String(academy.id),
         planKey: selectedPlan.key,
-        planName: selectedPlan.title,
-        date: new Date().toISOString(),
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        returnUrl: window.location.origin,
       });
-      setBookingState('success');
+      window.location.assign(payment.checkoutUrl);
     } catch (error) {
       console.error('Unable to create academy booking:', error);
       setBookingState('error');
@@ -124,7 +127,14 @@ export function AcademyDetailPage({
   const qPrice = Math.round((basePrice * 3 * 0.9) / 10) * 10;
   const yPrice = Math.round((basePrice * 12 * 0.75) / 10) * 10;
 
-  const plans = [
+  const plans: {
+    key: 'm' | 'q' | 'y';
+    title: string;
+    sub: string;
+    price: number;
+    unit: string;
+    badge: string;
+  }[] = [
     {
       key: 'm',
       title: 'اشتراك شهري',
@@ -152,6 +162,20 @@ export function AcademyDetailPage({
   ];
 
   const selectedPlan = plans[activePlanIdx];
+
+  if (showDemoCheckout) {
+    return (
+      <DemoCheckoutPage
+        onNavigate={(page, params) => {
+          setShowDemoCheckout(false);
+          onNavigate(page, params);
+        }}
+        academyName={academy.n}
+        planName={selectedPlan.title}
+        amount={selectedPlan.price}
+      />
+    );
+  }
 
   useEffect(() => {
     if (autoSubscribe && plansSectionRef.current) {
@@ -505,8 +529,8 @@ export function AcademyDetailPage({
                 {bookingState === 'saving' ? 'جاري إرسال الطلب...' : bookingState === 'success' ? 'تم إرسال الطلب' : 'إرسال طلب الاشتراك'}
               </button>
             </div>
-            {bookingState === 'success' && <p style={{ color: 'var(--green)', marginTop: '12px' }}>طلبك اتسجل وحالته الآن قيد المراجعة.</p>}
-            {bookingState === 'error' && <p style={{ color: 'var(--err)', marginTop: '12px' }}>تعذر إرسال الطلب. حاول مرة أخرى.</p>}
+            {bookingState === 'success' && <p style={{ color: 'var(--green)', marginTop: '12px' }}>تم تحويلك لصفحة الدفع الآمنة.</p>}
+            {bookingState === 'error' && <p style={{ color: 'var(--err)', marginTop: '12px' }}>تعذر بدء الدفع. تأكد من إعداد بوابة الدفع وحاول مرة أخرى.</p>}
           </div>
         </div>
       )}

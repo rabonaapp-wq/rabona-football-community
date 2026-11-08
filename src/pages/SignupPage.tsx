@@ -5,6 +5,7 @@ import { compressImage } from '../utils/imageCompressor';
 
 interface SignupPageProps {
   onNavigate: (page: PageId, params?: Record<string, any>) => void;
+  initialAccountType?: 'academy';
 }
 
 interface PlanItem {
@@ -121,7 +122,7 @@ function okMap(u: string): boolean {
   }
 }
 
-export function SignupPage({ onNavigate }: SignupPageProps) {
+export function SignupPage({ onNavigate, initialAccountType }: SignupPageProps) {
   const { currentUser, signInWithGoogle, registerProfile } = useAuth();
   const [accountType, setAccountType] = useState<'player' | 'coach' | 'academy' | null>(null);
   const [stepIndex, setStepIndex] = useState(-1);
@@ -208,6 +209,13 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
   const [badPlans, setBadPlans] = useState(false);
   const [badAges, setBadAges] = useState(false);
   const [globalError, setGlobalError] = useState('');
+
+  useEffect(() => {
+    if (initialAccountType === 'academy' && currentUser && accountType === null) {
+      setAccountType('academy');
+      setStepIndex(0);
+    }
+  }, [initialAccountType, currentUser, accountType]);
 
   // Profile & Cover photos step
   const [profilePhoto, setProfilePhoto] = useState<string>('');
@@ -466,7 +474,7 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
           `أهلاً يا كابتن ${cfn}، حسابك التدريبي جاهز وتقدر تستقبل طلبات اللاعبين.`
         );
       } else if (accountType === 'academy') {
-        await registerProfile('academy', {
+        const academyDetails = {
           name: an.trim(),
           governorate: agov,
           city: acity,
@@ -480,7 +488,8 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
           photoURL: profilePhoto || currentUser?.photoURL || '',
           coverURL: coverPhoto || '',
           bio: profileBio.trim(),
-        });
+        };
+        await registerProfile('academy', academyDetails);
         setDoneTxt(`أكاديمية ${an} بقت على رابونا وتقدر تستقبل لاعبين.`);
       }
 
