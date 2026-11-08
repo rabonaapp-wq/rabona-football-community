@@ -36,7 +36,7 @@ service cloud.firestore {
     }
 
     function isSelfAssignableRole(data) {
-      return !('role' in data) || data.role in ['player', 'coach'];
+      return !('role' in data) || data.role in ['player', 'coach', 'academy'];
     }
 
     match /admins/{userId} {
@@ -104,6 +104,12 @@ service cloud.firestore {
         (!('amount' in data) || (data.amount is number && data.amount >= 0));
     }
 
+    function isAcademyOwner(academyId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/academies/$(academyId)) &&
+        get(/databases/$(database)/documents/academies/$(academyId)).data.ownerUid == request.auth.uid;
+    }
+
     // Validation for Order
     function isValidOrder(data) {
       return data.keys().hasAll(['id', 'userUid', 'items', 'totalAmount', 'status']) &&
@@ -133,10 +139,16 @@ service cloud.firestore {
     match /publicProfiles/{userId} {
       allow get: if true;
       allow list: if false;
-      allow create, update: if isSignedIn() && (isAdmin() || isOwner(userId)) &&
+      allow create: if isSignedIn() && (isAdmin() || isOwner(userId)) &&
         incoming().keys().hasOnly(['uid', 'displayName', 'photoURL', 'coverURL', 'bio', 'role', 'updatedAt']) &&
-        incoming().uid == request.auth.uid &&
-        incoming().role in ['player', 'coach', 'academy', 'admin'];
+        incoming().uid == userId &&
+        (incoming().role in ['player', 'coach', 'academy'] ||
+          (incoming().role == 'admin' && isAdmin()));
+      allow update: if isSignedIn() && (isAdmin() || isOwner(userId)) &&
+        incoming().keys().hasOnly(['uid', 'displayName', 'photoURL', 'coverURL', 'bio', 'role', 'updatedAt']) &&
+        incoming().uid == userId &&
+        (isAdmin() || (incoming().role in ['player', 'coach', 'academy'] &&
+          incoming().role == existing().role));
       allow delete: if isAdmin() || isOwner(userId);
     }
 
@@ -259,22 +271,28 @@ service cloud.firestore {
       allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
       allow create: if isSignedIn() && isValidBooking(incoming()) &&
         incoming().userUid == request.auth.uid &&
-        incoming().status == 'pending';
+        incoming().status == 'pending' &&
+        !('amount' in incoming()) &&
+        ('planKey' in incoming() && incoming().planKey in ['m', 'q', 'y']) &&
+        exists(/databases/$(database)/documents/academies/$(incoming().academyId));
       allow update: if isSignedIn() && (
-        (existing().userUid == request.auth.uid && isValidBooking(incoming()) && incoming().userUid == existing().userUid) ||
+        (existing().userUid == request.auth.uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+          existing().status == 'pending' &&
+          incoming().status == 'cancelled') ||
+        (isAcademyOwner(existing().academyId) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+          incoming().status in ['confirmed', 'cancelled']) ||
         isAdmin()
       );
-      allow delete: if isAdmin() || (isSignedIn() && existing().userUid == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
     // Orders Collection
     match /orders/{orderId} {
       allow get: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
       allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && isValidOrder(incoming()) &&
-        incoming().userUid == request.auth.uid && incoming().status == 'pending';
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     // Notifications Collection
