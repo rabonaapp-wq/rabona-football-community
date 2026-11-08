@@ -7,6 +7,8 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
+    "api": "tsx server/index.ts",
+    "set-super-admin": "tsx server/set-super-admin.ts",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
   },
@@ -16,6 +18,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "firebase-admin": "^13.6.0",
     "firebase": "^13.1.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",

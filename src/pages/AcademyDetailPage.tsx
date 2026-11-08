@@ -90,7 +90,6 @@ export function AcademyDetailPage({
         academyId: String(academy.id),
         planKey: selectedPlan.key,
         planName: selectedPlan.title,
-        amount: selectedPlan.price,
         date: new Date().toISOString(),
         status: 'pending',
         createdAt: serverTimestamp(),
