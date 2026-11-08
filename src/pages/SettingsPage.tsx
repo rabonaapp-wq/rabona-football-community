@@ -8,7 +8,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ onNavigate }: SettingsPageProps) {
-  const { signOut, deleteAccount, isAdmin, userProfile } = useAuth();
+  const { signOut, deleteAccount, isAdmin, isAcademyOwner, userProfile } = useAuth();
   const [search, setSearch] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -118,7 +118,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               </span>
               <Icon name="back" />
             </button>
-            {isAdmin && (
+            {(isAdmin || isAcademyOwner) && (
               <button
                 type="button"
                 className="r-setting"

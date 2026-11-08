@@ -25,12 +25,18 @@ export interface UserProfile {
   playerData?: any;
   coachData?: any;
   academyData?: any;
+  hasAcademy?: boolean;
 }
+
+export type ActiveAccount = 'personal' | 'academy';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userProfile: UserProfile | null;
   isAdmin: boolean;
+  isAcademyOwner: boolean;
+  activeAccount: ActiveAccount;
+  switchAccount: (account: ActiveAccount) => void;
   loading: boolean;
   isNewUser: boolean;
   signInWithGoogle: () => Promise<UserProfile | null>;
@@ -45,6 +51,9 @@ const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   userProfile: null,
   isAdmin: false,
+  isAcademyOwner: false,
+  activeAccount: 'personal',
+  switchAccount: () => {},
   loading: true,
   isNewUser: false,
   signInWithGoogle: async () => null,
@@ -68,14 +77,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAcademyOwner, setIsAcademyOwner] = useState(false);
+  const [activeAccount, setActiveAccountState] = useState<ActiveAccount>(() => (
+    localStorage.getItem('rabona_active_account') === 'academy' ? 'academy' : 'personal'
+  ));
 
-  const fetchProfile = async (user: FirebaseUser) => {
+  const switchAccount = (account: ActiveAccount) => {
+    const nextAccount = account === 'academy' && !isAcademyOwner ? 'personal' : account;
+    setActiveAccountState(nextAccount);
+    localStorage.setItem('rabona_active_account', nextAccount);
+  };
+
+  const fetchProfile = async (user: FirebaseUser, syncPublicProfile = true) => {
     try {
-      const token = await user.getIdTokenResult();
+      const token = await user.getIdTokenResult(true);
       const adminSnapshot = await getDoc(doc(db, 'admins', user.uid));
       setIsAdmin(token.claims.admin === true || adminSnapshot.exists());
       const userDocRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userDocRef);
+      const academySnapshot = await getDoc(doc(db, 'academies', user.uid));
+      setIsAcademyOwner(academySnapshot.exists() && academySnapshot.data().ownerUid === user.uid);
+      if (!academySnapshot.exists() && activeAccount === 'academy') {
+        switchAccount('personal');
+      }
 
       if (snap.exists()) {
         const data = snap.data();
@@ -91,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const aSnap = await getDoc(doc(db, 'academies', user.uid));
           if (aSnap.exists()) roleData = aSnap.data();
         }
+        const academyData = academySnapshot.exists() ? academySnapshot.data() : undefined;
 
         const profile: UserProfile = {
           uid: user.uid,
@@ -103,22 +128,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isRegistered: true,
           playerData: data.role === 'player' ? roleData : undefined,
           coachData: data.role === 'coach' ? roleData : undefined,
-          academyData: data.role === 'academy' ? roleData : undefined,
+          academyData: academyData || (data.role === 'academy' ? roleData : undefined),
+          hasAcademy: Boolean(academyData),
         };
 
         setUserProfile(profile);
         setIsNewUser(false);
-        void setDoc(doc(db, 'publicProfiles', user.uid), {
-          uid: user.uid,
-          displayName: profile.displayName,
-          photoURL: profile.photoURL || '',
-          coverURL: profile.coverURL || '',
-          bio: profile.bio || '',
-          role: profile.role || 'player',
-          updatedAt: serverTimestamp(),
-        }, { merge: true }).catch((error) => {
-          console.warn('Unable to refresh public profile:', error);
-        });
+        if (syncPublicProfile) {
+          await setDoc(doc(db, 'publicProfiles', user.uid), {
+            uid: user.uid,
+            displayName: profile.displayName,
+            photoURL: profile.photoURL || '',
+            coverURL: profile.coverURL || '',
+            bio: profile.bio || '',
+            role: profile.role || 'player',
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+        }
         localStorage.setItem('rabona_user', JSON.stringify({
           ...profile,
           firstName: roleData?.firstName || profile.displayName.split(' ')[0] || 'لاعب',
@@ -130,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           photo: data.photoURL || user.photoURL || '',
           cover: data.coverURL || '',
           bio: data.bio || roleData?.bio || '',
-          academyName: roleData?.name || profile.displayName,
+          academyName: academyData?.name || roleData?.name || profile.displayName,
           address: {
             governorate: roleData?.governorate || '',
             city: roleData?.city || '',
@@ -145,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           displayName: user.displayName || '',
           photoURL: user.photoURL || '',
           isRegistered: false,
+          hasAcademy: academySnapshot.exists(),
         };
         setUserProfile(draftProfile);
         setIsNewUser(true);
@@ -163,6 +190,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(null);
         setIsNewUser(false);
         setIsAdmin(false);
+        setIsAcademyOwner(false);
+        switchAccount('personal');
         await fetchProfile(user);
       } else {
         setUserProfile(null);
@@ -197,6 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserProfile(null);
       setIsNewUser(false);
       setIsAdmin(false);
+      setIsAcademyOwner(false);
+      switchAccount('personal');
       localStorage.removeItem('rabona_user');
     } catch (error) {
       console.error('Sign Out Error:', error);
@@ -207,15 +238,165 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth.currentUser) {
       throw new Error('User must be signed in with Google first.');
     }
+    if (role !== 'player' && role !== 'coach' && role !== 'academy') {
+      throw new Error('Unsupported registration role.');
+    }
     const user = auth.currentUser;
     const uid = user.uid;
+    const userRef = doc(db, 'users', uid);
+    const existing = await getDoc(userRef);
+    const existingData = existing.exists() ? existing.data() : null;
+    const existingAcademy = role === 'academy'
+      ? await getDoc(doc(db, 'academies', uid))
+      : null;
+    const existingAcademyData = existingAcademy?.exists() ? existingAcademy.data() : null;
+    const profileRole = role === 'academy' && existingData?.role
+      ? existingData.role
+      : role;
+    const displayName = details.name
+      || `${details.firstName || ''} ${details.lastName || ''}`.trim()
+      || user.displayName
+      || 'لاعب';
+    const batch = writeBatch(db);
+
+    batch.set(userRef, {
+      uid,
+      email: user.email || '',
+      displayName,
+      photoURL: details.photoURL || user.photoURL || '',
+      coverURL: details.coverURL || '',
+      bio: details.bio || '',
+      role: profileRole,
+      createdAt: existingData?.createdAt || serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    batch.set(doc(db, 'publicProfiles', uid), {
+      uid,
+      displayName,
+      photoURL: details.photoURL || user.photoURL || '',
+      coverURL: details.coverURL || '',
+      bio: details.bio || '',
+      role: profileRole,
+      updatedAt: serverTimestamp(),
+    });
+
+    if (role === 'player') {
+      batch.set(doc(db, 'players', uid), {
+        uid,
+        firstName: details.firstName || '',
+        lastName: details.lastName || '',
+        dob: details.dob || '',
+        foot: details.foot || 'يمنى',
+        position: details.position || 'مهاجم',
+        governorate: details.governorate || '',
+        city: details.city || '',
+        address: details.address || '',
+        number: details.number || '10',
+        matches: 0,
+        goals: 0,
+        assists: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } else if (role === 'coach') {
+      batch.set(doc(db, 'coaches', uid), {
+        uid,
+        firstName: details.firstName || '',
+        lastName: details.lastName || '',
+        title: details.title || 'مدرب معتمد',
+        experienceYears: details.experienceYears || 0,
+        specialties: details.specialties || [],
+        license: details.license || '',
+        governorate: details.governorate || '',
+        city: details.city || '',
+        venues: details.venues || '',
+        plans: details.plans || [],
+        ageMin: details.ageMin || 6,
+        ageMax: details.ageMax || 18,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } else {
+      batch.set(doc(db, 'academies', uid), {
+        id: uid,
+        ownerUid: uid,
+        name: details.name || '',
+        photoURL: details.photoURL || user.photoURL || '',
+        coverURL: details.coverURL || '',
+        bio: details.bio || '',
+        governorate: details.governorate || '',
+        city: details.city || '',
+        address: details.address || '',
+        mapUrl: details.mapUrl || '',
+        price: details.price || 800,
+        spots: 20,
+        cap: 25,
+        minAge: details.ageMin || 6,
+        maxAge: details.ageMax || 18,
+        rate: existingAcademyData?.rate ?? 5,
+        reviewsCount: existingAcademyData?.reviewsCount ?? 0,
+        categories: details.features || [],
+        plans: details.plans || [],
+        formerPlayers: details.formerPlayers || [],
+        createdAt: existingAcademyData?.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: Boolean(existingAcademyData) });
+    }
+
+    await batch.commit();
+    await fetchProfile(user, false);
+
+    /*
+    const user = auth.currentUser;
+    const uid = user.uid;
+    const token = await user.getIdTokenResult(true);
+    const hasAdminClaim = token.claims.admin === true;
+    const operations: RegistrationOperation[] = [];
 
     try {
       // 1. Create User root doc
       const userRef = doc(db, 'users', uid);
       const existingUserSnapshot = await getDoc(userRef);
       const existingUser = existingUserSnapshot.exists() ? existingUserSnapshot.data() : null;
-      await setDoc(userRef, {
+      if (existingUser?.role && existingUser.role !== role && !hasAdminClaim) {
+        console.error('Registration blocked: role change requires a trusted admin claim.', {
+          uid,
+          existingRole: existingUser.role,
+          requestedRole: role,
+          hasAdminClaim,
+        });
+        throw new Error(REGISTRATION_SUPER_ADMIN_CLAIM_REQUIRED);
+      }
+      const batch = writeBatch(db);
+      const queueSet = (
+        action: RegistrationOperation['action'],
+        path: string,
+        reference: ReturnType<typeof doc>,
+        data: Record<string, unknown>,
+        merge = false
+      ) => {
+        operations.push({ action, path });
+        if (merge) {
+          batch.set(reference, data, { merge: true });
+        } else {
+          batch.set(reference, data);
+        }
+      };
+      if (hasAdminClaim && existingUser?.role && existingUser.role !== role) {
+        const previousRoleCollection =
+          existingUser.role === 'player'
+            ? 'players'
+            : existingUser.role === 'coach'
+              ? 'coaches'
+              : existingUser.role === 'academy'
+                ? 'academies'
+                : null;
+        if (previousRoleCollection) {
+          operations.unshift({ action: 'delete', path: `${previousRoleCollection}/${uid}` });
+          batch.delete(doc(db, previousRoleCollection, uid));
+        }
+      }
+      queueSet(existingUserSnapshot.exists() ? 'update' : 'create', `users/${uid}`, userRef, {
         uid,
         email: user.email || '',
         displayName: details.name || `${details.firstName || ''} ${details.lastName || ''}`.trim() || user.displayName || 'لاعب',
@@ -225,8 +406,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         createdAt: existingUser?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp(),
-      }, { merge: true });
-      await setDoc(doc(db, 'publicProfiles', uid), {
+      }, true);
+      queueSet('write', `publicProfiles/${uid}`, doc(db, 'publicProfiles', uid), {
         uid,
         displayName: details.name || `${details.firstName || ''} ${details.lastName || ''}`.trim() || user.displayName || 'لاعب',
         photoURL: details.photoURL || user.photoURL || '',
@@ -235,11 +416,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         updatedAt: serverTimestamp(),
       });
+      let academyCacheItem: Record<string, unknown> | null = null;
 
       // 2. Create Role specific doc
       if (role === 'player') {
         const playerRef = doc(db, 'players', uid);
-        await setDoc(playerRef, {
+        queueSet('write', `players/${uid}`, playerRef, {
           uid,
           firstName: details.firstName || '',
           lastName: details.lastName || '',
@@ -258,7 +440,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else if (role === 'coach') {
         const coachRef = doc(db, 'coaches', uid);
-        await setDoc(coachRef, {
+        queueSet('write', `coaches/${uid}`, coachRef, {
           uid,
           firstName: details.firstName || '',
           lastName: details.lastName || '',
@@ -277,7 +459,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else if (role === 'academy') {
         const academyRef = doc(db, 'academies', uid);
-        await setDoc(academyRef, {
+        queueSet('write', `academies/${uid}`, academyRef, {
           id: uid,
           ownerUid: uid,
           name: details.name || '',
@@ -301,9 +483,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-        try {
-          const cachedAcademies = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
-          const academyItem = {
+        academyCacheItem = {
             id: uid,
             n: details.name || '',
             logo: details.photoURL || user.photoURL || '',
@@ -321,20 +501,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             cap: 25,
             categories: details.features || [],
           };
+      } else {
+        throw new Error('Unsupported registration role.');
+      }
 
+      await batch.commit();
+      if (academyCacheItem) {
+        try {
+          const cachedAcademies = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
           const withoutCurrent = Array.isArray(cachedAcademies)
             ? cachedAcademies.filter((academy: any) => academy.id !== uid)
             : [];
-          localStorage.setItem('rabona_academies', JSON.stringify([academyItem, ...withoutCurrent]));
+          localStorage.setItem('rabona_academies', JSON.stringify([academyCacheItem, ...withoutCurrent]));
         } catch (cacheError) {
           console.warn('Unable to cache academy listing:', cacheError);
         }
       }
-
-      await fetchProfile(user);
+      await fetchProfile(user, false);
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
+      if (error instanceof Error && error.message === 'Unsupported registration role.') {
+        throw error;
+      }
+      logRegistrationFailure(error, uid, operations);
     }
+    */
   };
 
   const updateUserMedia = async (photoURL?: string, coverURL?: string, bio?: string) => {
@@ -428,6 +618,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(null);
     setUserProfile(null);
     setIsNewUser(false);
+    setIsAcademyOwner(false);
     localStorage.clear();
   };
 
@@ -443,6 +634,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         currentUser,
         userProfile,
         isAdmin,
+        isAcademyOwner,
+        activeAccount,
+        switchAccount,
         loading,
         isNewUser,
         signInWithGoogle,

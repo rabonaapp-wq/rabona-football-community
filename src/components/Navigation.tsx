@@ -32,7 +32,7 @@ export function Navigation({
   searchQuery = '',
   onSearchChange,
 }: NavigationProps) {
-  const { currentUser: authUser, userProfile, isAdmin } = useAuth();
+  const { currentUser: authUser, userProfile, isAdmin, isAcademyOwner } = useAuth();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [cartCount, setCartCount] = useState<number>(0);
 

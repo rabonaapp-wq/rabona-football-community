@@ -4,12 +4,14 @@
 
 Rabona is a React + TypeScript single-page football community application. The client runs through Vite and uses Firebase for authentication, database persistence, and media storage.
 
-The current signup experience creates only two user types:
+The signup experience creates three application roles:
 
 - Player
 - Coach
+- Academy
 
-Football academies are modeled as public page-like entities. They are not shown as a signup option, but existing academy records remain supported for browsing, details, and subscriptions.
+The platform administrator is not a signup role. Administrative access is
+provisioned only through Firebase Admin SDK custom claims.
 
 ```mermaid
 flowchart LR
@@ -64,6 +66,10 @@ Unauthenticated users are redirected to `login`, except while completing `signup
 
 ## 4. Registration Model
 
+Registration writes are performed by the authenticated client in one Firestore
+batch. Firestore rules validate the caller, role, ownership, and protected
+fields for every document.
+
 ### Player
 
 `SignupPage` collects identity, date of birth, preferred foot, field position, and location. The result is written to:
@@ -93,7 +99,28 @@ Academies are stored as page-like records in `academies/{academyId}`. An academy
 
 Academy list pages read public academy records and cache them in `rabona_academies`. Academy detail pages present the academy as a public community page with a cover, profile image, bio, actions, tabs, plans, schedule, reviews, and map.
 
-## 5. Main Feature Modules
+Creating an academy from an existing player or coach account creates the
+academy page at `academies/{uid}` with `ownerUid: uid` and does not change the
+user's existing role. The owner is granted academy-management navigation by
+the ownership check; this is separate from platform administration.
+
+## 5. Firestore Data Domains
+
+| Domain | Collection/document | Owner of writes |
+| --- | --- | --- |
+| Authentication | Firebase Auth user | Firebase Auth/Admin SDK |
+| Identity | `users/{uid}` | Authenticated registration; limited self profile updates |
+| Public projection | `publicProfiles/{uid}` | Authenticated registration and controlled profile updates |
+| Role data | `players/{uid}`, `coaches/{uid}`, `academies/{uid}` | Authenticated registration; academy owner/admin rules for later edits |
+| Community | `posts/{postId}`, `stories/{uid}` | Existing owner and moderation rules |
+| Academy access | `bookings/{id}`, `subscriptions/{paymentId}` | Existing Firestore rules and verified lifecycle transitions |
+| Payments | `payments/{paymentId}`, `paymentTransactions/{eventHash}` | Existing Firestore rules; no payment backend is enabled |
+| Administration | `admins/{uid}`, admin claims | Trusted Admin SDK only |
+
+The role document ID is the Firebase Auth UID for user-owned roles. Academy
+ownership is therefore explicit and cannot be transferred by a browser write.
+
+## 6. Main Feature Modules
 
 | Module | Responsibility | Main data |
 | --- | --- | --- |
@@ -106,7 +133,7 @@ Academy list pages read public academy records and cache them in `rabona_academi
 | StorePage | Store products, cart, orders | `orders` |
 | AdminDashboard | Administrative management and moderation | multiple collections |
 
-## 6. Media Flow
+## 7. Media Flow
 
 1. The user selects an image in a page component.
 2. The image is compressed or converted to a browser data URL.
@@ -118,7 +145,7 @@ Post images use the path pattern:
 
 `posts/{authorUid}/{postId}/{imageId}.webp`
 
-## 7. Security Boundaries
+## 8. Security Boundaries
 
 Firestore rules provide the server-side authorization boundary:
 
@@ -131,16 +158,17 @@ Firestore rules provide the server-side authorization boundary:
 
 Client-side validation improves UX but is not the security boundary.
 
-## 8. Current Production Gaps
+## 9. Current Production Gaps
 
 - Firebase Storage is configured in the client and rules are present, but Storage is not enabled in the `rabona-eg` Firebase project.
 - Some existing profile and story flows still use compressed data URLs; migrating them to Storage requires a controlled data migration.
 - Admin custom claims or `admins/{uid}` records must be provisioned through trusted Admin SDK or Console operations.
 - Store products and online payment are not production-enabled; orders remain a pending/manual-payment concern until a trusted catalog and payment flow exist.
 
-## 9. Runtime and Deployment
+## 10. Runtime and Deployment
 
 - Development server: `npm run dev`
+- Backend API: `npm run api` (local port `8787`)
 - TypeScript validation: `npm run lint`
 - Production build: `npm run build`
 - Firebase configuration: `firebase.json`, `firestore.rules`, and `storage.rules`

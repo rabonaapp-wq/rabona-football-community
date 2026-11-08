@@ -16,7 +16,7 @@ import { DemoCheckoutPage } from './pages/DemoCheckoutPage';
 import { useAuth } from './context/AuthContext';
 
 export default function App() {
-  const { currentUser, userProfile, isAdmin, loading } = useAuth();
+  const { currentUser, userProfile, isAdmin, isAcademyOwner, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageId>('login');
   const [pageParams, setPageParams] = useState<Record<string, any>>({});
   const [globalSearch, setGlobalSearch] = useState('');
@@ -103,7 +103,7 @@ export default function App() {
       window.location.hash = 'login';
       return;
     }
-    if (page === 'admin' && !isAdmin) {
+    if (page === 'admin' && !isAdmin && !isAcademyOwner) {
       setCurrentPage('home');
       window.location.hash = 'home';
       return;

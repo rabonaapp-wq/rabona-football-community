@@ -105,6 +105,12 @@ export function AcademyDetailPage({
     }
   };
 
+  useEffect(() => {
+    if (autoSubscribe && plansSectionRef.current) {
+      plansSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [autoSubscribe]);
+
   if (isLoading) {
     return <main className="wrap-detail"><section className="missing" style={{ display: 'block', textAlign: 'center', padding: '60px 16px' }}>جار تحميل صفحة الأكاديمية...</section></main>;
   }
@@ -176,12 +182,6 @@ export function AcademyDetailPage({
       />
     );
   }
-
-  useEffect(() => {
-    if (autoSubscribe && plansSectionRef.current) {
-      plansSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [autoSubscribe]);
 
   const handleGalleryScroll = () => {
     if (galleryRef.current && galleryRef.current.firstElementChild) {
