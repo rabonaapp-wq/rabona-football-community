@@ -47,6 +47,7 @@ service cloud.firestore {
         data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'coverURL', 'role', 'bio', 'createdAt', 'updatedAt', 'firstName', 'lastName', 'phone', 'id', 'status', 'isRegistered']) &&
         data.uid is string && data.uid == request.auth.uid &&
         data.email is string && data.email.size() <= 256 &&
+        request.auth.token.email == data.email &&
         (!('role' in data) || data.role in ['player', 'coach', 'academy', 'admin']);
     }
 
@@ -77,9 +78,21 @@ service cloud.firestore {
     // Validation for Academy
     function isValidAcademy(data) {
       return data.keys().hasAll(['id', 'ownerUid', 'name', 'price']) &&
-        data.ownerUid is string && data.ownerUid == request.auth.uid &&
+        data.id is string && data.ownerUid is string &&
         data.name is string && data.name.size() <= 100 &&
         data.price is number && data.price >= 0;
+    }
+
+    function isValidNewAcademy(data) {
+      return isValidAcademy(data) &&
+        data.keys().hasOnly(['id', 'ownerUid', 'name', 'photoURL', 'coverURL', 'bio', 'governorate', 'city', 'address', 'mapUrl', 'price', 'spots', 'cap', 'minAge', 'maxAge', 'rate', 'reviewsCount', 'categories', 'plans', 'formerPlayers', 'createdAt', 'updatedAt']);
+    }
+
+    function isValidAcademyUpdate() {
+      return incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoURL', 'coverURL', 'bio', 'governorate', 'city', 'address', 'mapUrl', 'price', 'spots', 'cap', 'minAge', 'maxAge', 'categories', 'plans', 'formerPlayers', 'updatedAt']) &&
+        isValidAcademy(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerUid == existing().ownerUid;
     }
 
     // Validation for Post
@@ -119,6 +132,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && isOwner(userId) && isValidInitialUser(incoming());
       allow update: if isSignedIn() && (
         (isOwner(userId) && isValidUser(incoming()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'coverURL', 'bio', 'role', 'createdAt', 'updatedAt']) &&
           incoming().uid == existing().uid &&
           incoming().email == existing().email &&
           ((!('role' in existing()) &&
@@ -126,7 +140,10 @@ service cloud.firestore {
            ('role' in existing() && 'role' in incoming() && incoming().role == existing().role)) &&
           (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt)
         ) ||
-        isAdmin()
+        (isAdmin() && isValidUser(incoming()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'coverURL', 'bio', 'role', 'createdAt', 'updatedAt', 'status', 'isRegistered']) &&
+          incoming().uid == existing().uid &&
+          incoming().email == existing().email)
       );
       allow delete: if isAdmin();
     }
@@ -144,7 +161,7 @@ service cloud.firestore {
         incoming().keys().hasOnly(['uid', 'displayName', 'photoURL', 'coverURL', 'bio', 'role', 'updatedAt']) &&
         incoming().uid == userId &&
         (isAdmin() || (incoming().role in ['player', 'coach', 'academy'] &&
-          incoming().role == existing().role));
+          (!('role' in existing()) || incoming().role == existing().role)));
       allow delete: if isAdmin() || isOwner(userId);
     }
 
@@ -176,10 +193,12 @@ service cloud.firestore {
     match /academies/{academyId} {
       allow get: if true;
       allow list: if true;
-      allow create: if isSignedIn() && isValidAcademy(incoming()) && (incoming().ownerUid == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidNewAcademy(incoming()) &&
+        incoming().id == academyId &&
+        ((academyId == request.auth.uid && incoming().ownerUid == request.auth.uid) || isAdmin());
       allow update: if isSignedIn() && (
-        (existing().ownerUid == request.auth.uid && isValidAcademy(incoming()) && incoming().ownerUid == existing().ownerUid) ||
-        isAdmin()
+        (existing().ownerUid == request.auth.uid && isValidAcademyUpdate()) ||
+        (isAdmin() && isValidAcademyUpdate())
       );
       allow delete: if isAdmin() || (isSignedIn() && existing().ownerUid == request.auth.uid);
     }

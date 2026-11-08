@@ -215,7 +215,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userRef = doc(db, 'users', uid);
       const existingUserSnapshot = await getDoc(userRef);
       const existingUser = existingUserSnapshot.exists() ? existingUserSnapshot.data() : null;
-      await setDoc(userRef, {
+      const batch = writeBatch(db);
+      if (isAdmin && existingUser?.role && existingUser.role !== role) {
+        const previousRoleCollection =
+          existingUser.role === 'player'
+            ? 'players'
+            : existingUser.role === 'coach'
+              ? 'coaches'
+              : existingUser.role === 'academy'
+                ? 'academies'
+                : null;
+        if (previousRoleCollection) {
+          batch.delete(doc(db, previousRoleCollection, uid));
+        }
+      }
+      batch.set(userRef, {
         uid,
         email: user.email || '',
         displayName: details.name || `${details.firstName || ''} ${details.lastName || ''}`.trim() || user.displayName || 'لاعب',
@@ -226,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: existingUser?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp(),
       }, { merge: true });
-      await setDoc(doc(db, 'publicProfiles', uid), {
+      batch.set(doc(db, 'publicProfiles', uid), {
         uid,
         displayName: details.name || `${details.firstName || ''} ${details.lastName || ''}`.trim() || user.displayName || 'لاعب',
         photoURL: details.photoURL || user.photoURL || '',
@@ -235,11 +249,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         updatedAt: serverTimestamp(),
       });
+      let academyCacheItem: Record<string, unknown> | null = null;
 
       // 2. Create Role specific doc
       if (role === 'player') {
         const playerRef = doc(db, 'players', uid);
-        await setDoc(playerRef, {
+        batch.set(playerRef, {
           uid,
           firstName: details.firstName || '',
           lastName: details.lastName || '',
@@ -258,7 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else if (role === 'coach') {
         const coachRef = doc(db, 'coaches', uid);
-        await setDoc(coachRef, {
+        batch.set(coachRef, {
           uid,
           firstName: details.firstName || '',
           lastName: details.lastName || '',
@@ -277,7 +292,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else if (role === 'academy') {
         const academyRef = doc(db, 'academies', uid);
-        await setDoc(academyRef, {
+        batch.set(academyRef, {
           id: uid,
           ownerUid: uid,
           name: details.name || '',
@@ -301,9 +316,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-        try {
-          const cachedAcademies = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
-          const academyItem = {
+        academyCacheItem = {
             id: uid,
             n: details.name || '',
             logo: details.photoURL || user.photoURL || '',
@@ -321,16 +334,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             cap: 25,
             categories: details.features || [],
           };
+      } else {
+        throw new Error('Unsupported registration role.');
+      }
 
+      await batch.commit();
+      if (academyCacheItem) {
+        try {
+          const cachedAcademies = JSON.parse(localStorage.getItem('rabona_academies') || '[]');
           const withoutCurrent = Array.isArray(cachedAcademies)
             ? cachedAcademies.filter((academy: any) => academy.id !== uid)
             : [];
-          localStorage.setItem('rabona_academies', JSON.stringify([academyItem, ...withoutCurrent]));
+          localStorage.setItem('rabona_academies', JSON.stringify([academyCacheItem, ...withoutCurrent]));
         } catch (cacheError) {
           console.warn('Unable to cache academy listing:', cacheError);
         }
       }
-
       await fetchProfile(user);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);

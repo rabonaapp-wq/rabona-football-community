@@ -59,4 +59,5 @@ official API and webhook documentation.
 
 After the Firebase Auth account exists, run `npm run set-super-admin` with
 server credentials. It verifies `rabonaapp@gmail.com` by Firebase Auth email
-and sets the `admin` custom claim; the claim is not writable by the client.
+and sets the `admin` and `superAdmin` custom claims; the claims are not writable
+by the client.

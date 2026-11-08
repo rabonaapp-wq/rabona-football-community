@@ -23,8 +23,8 @@ Status date: 2026-11-05
 ## Pending External Actions
 
 - PENDING - Enable Firebase Storage in the `rabona-eg` Firebase Console. The code and Storage rules are present, but the project currently reports Storage as not set up.
-- PENDING - Provision administrator access using Firebase Admin SDK custom claim `admin: true` or an `admins/{uid}` document. Do not create this through the browser.
-- PENDING - Deploy `firestore.rules`, `storage.rules`, and `firestore.indexes.json` after reviewing them in the Firebase Console.
+- PENDING - Provision administrator access using Firebase Admin SDK custom claims. Do not create this through the browser.
+- PENDING - Deploy `storage.rules` and `firestore.indexes.json` after reviewing them in the Firebase Console. The updated Firestore rules have been compiled and deployed.
 - PENDING - Configure authorized domains for Google Authentication.
 - PENDING - Enable and validate Firebase App Check before production enforcement.
 - PENDING - Configure a trusted product catalog and payment provider before enabling paid orders.
@@ -46,7 +46,7 @@ Status date: 2026-11-05
 2. Enable Storage and configure its bucket.
 3. Provision admin claim/document through trusted tooling.
 4. Run emulator security tests.
-5. Deploy rules and indexes:
+5. Deploy remaining rules and indexes:
 
    `npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage`
 
@@ -54,4 +54,4 @@ Status date: 2026-11-05
 7. Verify login, signup, feed, upload, academy discovery, booking request, and logout on desktop and mobile.
 8. Enable App Check enforcement only after legitimate traffic is validated.
 
-No production data was modified by this audit. The rules dry-run was performed without deployment.
+No production documents were modified by this audit. Firestore rules were compiled and deployed; storage and index deployment remain pending.
