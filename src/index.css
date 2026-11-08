@@ -3600,6 +3600,9 @@ label, .lb {
   font-weight: 700;
   text-decoration: none;
 }
+.foot .btn:not(.ghost) {
+  color: #04170B;
+}
 .done {
   align-items: center;
   text-align: center;
