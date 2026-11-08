@@ -14,7 +14,15 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ onNavigate, viewUid }: ProfilePageProps) {
-  const { currentUser: authUser, userProfile, updateUserMedia, signOut } = useAuth();
+  const {
+    currentUser: authUser,
+    userProfile,
+    updateUserMedia,
+    signOut,
+    isAcademyOwner,
+    activeAccount,
+    switchAccount,
+  } = useAuth();
   const [activeTab, setActiveTab] = useState<'posts' | 'photos' | 'subs'>('posts');
   const [otherUser, setOtherUser] = useState<any>(null);
   const [isLoadingOther, setIsLoadingOther] = useState(false);
@@ -109,14 +117,21 @@ export function ProfilePage({ onNavigate, viewUid }: ProfilePageProps) {
     }
   })();
 
-  const currentUser = isOwnProfile ? (userProfile || authUser || cachedUser) : otherUser;
+  const academyAccount = userProfile?.academyData;
+  const currentUser = isOwnProfile
+    ? (activeAccount === 'academy' && academyAccount
+      ? academyAccount
+      : (userProfile || authUser || cachedUser))
+    : otherUser;
 
   const displayName = isOwnProfile
-    ? (userProfile?.displayName || authUser?.displayName || authUser?.email?.split('@')[0] || (
+    ? (activeAccount === 'academy' && academyAccount?.name
+      ? academyAccount.name
+      : (userProfile?.displayName || authUser?.displayName || authUser?.email?.split('@')[0] || (
         currentUser
           ? `${currentUser.firstName || currentUser.academyName || ''} ${currentUser.lastName || ''}`.trim() || 'حسابي'
           : 'حسابي'
-      ))
+      )))
     : (otherUser?.displayName || 'لاعب');
 
   const userCity = currentUser?.address
@@ -128,19 +143,21 @@ export function ProfilePage({ onNavigate, viewUid }: ProfilePageProps) {
     : '';
 
   const photoURL = isOwnProfile
-    ? (userProfile?.photoURL || authUser?.photoURL || '')
+    ? (activeAccount === 'academy'
+      ? (academyAccount?.photoURL || '')
+      : (userProfile?.photoURL || authUser?.photoURL || ''))
     : (otherUser?.photoURL || '');
 
   const coverURL = isOwnProfile
-    ? (userProfile?.coverURL || '')
+    ? (activeAccount === 'academy' ? (academyAccount?.coverURL || '') : (userProfile?.coverURL || ''))
     : (otherUser?.coverURL || '');
 
   const userBio = isOwnProfile
-    ? (userProfile?.bio || currentUser?.bio || '')
+    ? (activeAccount === 'academy' ? (academyAccount?.bio || '') : (userProfile?.bio || currentUser?.bio || ''))
     : (otherUser?.bio || '');
 
   const userRole = isOwnProfile
-    ? (userProfile?.role || currentUser?.type || 'player')
+    ? (activeAccount === 'academy' ? 'academy' : (userProfile?.role || currentUser?.type || 'player'))
     : (otherUser?.role || 'player');
 
   const roleLabel =
@@ -316,6 +333,15 @@ export function ProfilePage({ onNavigate, viewUid }: ProfilePageProps) {
 
         {isOwnProfile && (
           <div className="acts-profile">
+            {isOwnProfile && isAcademyOwner && (
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => switchAccount(activeAccount === 'academy' ? 'personal' : 'academy')}
+              >
+                {activeAccount === 'academy' ? 'الحساب الرئيسي' : 'حساب الأكاديمية'}
+              </button>
+            )}
             <button type="button" className="btn" onClick={() => onNavigate('settings')}>
               تعديل الملف الشخصي
             </button>

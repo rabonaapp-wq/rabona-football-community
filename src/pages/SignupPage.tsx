@@ -496,7 +496,13 @@ export function SignupPage({ onNavigate, initialAccountType }: SignupPageProps) 
       setIsCompleted(true);
     } catch (err) {
       console.error('Failed to save profile:', err);
-      setGlobalError('حدث خطأ أثناء حفظ البيانات، يرجى المحاولة مرة أخرى.');
+      setGlobalError(
+        err instanceof Error && err.message === 'SUPER_ADMIN_CLAIM_REQUIRED'
+          ? 'الحساب الإداري يحتاج تفعيل صلاحية المنصة من الخادم أولاً. سجّل خروجك ثم ادخل مرة أخرى بعد التفعيل.'
+          : err instanceof Error && err.message === 'REGISTRATION_FAILED_RETRY'
+            ? 'لم يتم حفظ التسجيل. بيانات حسابك ما زالت محفوظة، حاول مرة أخرى.'
+          : 'حدث خطأ أثناء حفظ البيانات، يرجى المحاولة مرة أخرى.'
+      );
       setTimeout(() => setGlobalError(''), 4000);
     } finally {
       setIsSubmitting(false);
